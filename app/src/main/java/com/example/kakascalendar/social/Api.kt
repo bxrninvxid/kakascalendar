@@ -100,6 +100,17 @@ data class FriendsRes(
 data class UsernameReq(val username: String)
 
 @Serializable
+data class UserIdReq(@SerialName("user_id") val userId: Long)
+
+/** One person in the server's people directory. status: none | outgoing | incoming | friend */
+@Serializable
+data class DirectoryEntry(
+    val user: UserDto,
+    val status: String = "none",
+    @SerialName("request_id") val requestId: Long? = null
+)
+
+@Serializable
 data class ReactReq(val emoji: String)
 
 @Serializable
@@ -155,6 +166,9 @@ class Api(base: String, private val token: String?) {
     suspend fun friends(): FriendsRes = client.get("$base/friends") { auth() }.body()
     suspend fun requestFriend(username: String): StatusRes =
         client.post("$base/friends/request") { auth(); jsonBody(UsernameReq(username)) }.body()
+    suspend fun requestFriendById(userId: Long): StatusRes =
+        client.post("$base/friends/request") { auth(); jsonBody(UserIdReq(userId)) }.body()
+    suspend fun directory(): List<DirectoryEntry> = client.get("$base/users") { auth() }.body()
     suspend fun accept(requestId: Long) { client.post("$base/friends/requests/$requestId/accept") { auth() } }
     suspend fun decline(requestId: Long) { client.post("$base/friends/requests/$requestId/decline") { auth() } }
     suspend fun unfriend(userId: Long) { client.delete("$base/friends/$userId") { auth() } }

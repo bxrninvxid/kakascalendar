@@ -163,7 +163,7 @@ class PrivateServerTest(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.srv.shutdown()
-        server.CONFIG.update(invite_code=None, auto_friends=False)
+        server.CONFIG.update(invite_code=None, auto_friends=False, directory=False)
 
     call = SquadServerTest.call
 
@@ -187,6 +187,69 @@ class PrivateServerTest(unittest.TestCase):
         self.call("POST", "/events", {"kind": "achievement", "payload": {"title": "First Drop"}}, toks[1])
         feed = self.call("GET", "/feed", tok=toks[2])[1]
         self.assertTrue(any(x["user"]["username"] == "ben" and x["kind"] == "achievement" for x in feed))
+
+
+class DirectoryServerTest(unittest.TestCase):
+    """People directory with normal friend requests."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.srv = server.make_server("127.0.0.1", 0, os.path.join(tempfile.mkdtemp(), "d.db"),
+                                     invite_code="k", directory=True)
+        cls.base = f"http://127.0.0.1:{cls.srv.server_address[1]}"
+        threading.Thread(target=cls.srv.serve_forever, daemon=True).start()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.srv.shutdown()
+        server.CONFIG.update(invite_code=None, auto_friends=False, directory=False)
+
+    call = SquadServerTest.call
+
+    def test_directory_flow(self):
+        toks, users = [], []
+        for n in ("dora", "eli", "finn"):
+            st, js = self.call("POST", "/auth/register", {"username": n, "password": "secret123", "invite_code": "k"})
+            self.assertEqual(st, 200, js)
+            toks.append(js["token"]); users.append(js["user"])
+        d, e, f = toks
+        self.assertTrue(self.call("GET", "/health")[1]["directory"])
+
+        listing = self.call("GET", "/users", tok=d)[1]
+        self.assertEqual([x["user"]["username"] for x in listing], ["eli", "finn"])
+        self.assertTrue(all(x["status"] == "none" for x in listing))
+        self.assertNotIn("current_streak", listing[0]["user"])   # no stats for strangers
+
+        # not friends yet: no feed visibility
+        self.call("POST", "/me/stats", {"current_streak": 9, "best_streak": 9, "total": 9, "week_count": 9,
+                                        "xp": 9, "level": 2}, e)
+        self.call("PATCH", "/me", {"share_level": "full"}, e)
+        self.call("POST", "/events", {"kind": "log", "payload": {"type": "4"}}, e)
+        self.assertFalse(any(x["user"]["username"] == "eli" for x in self.call("GET", "/feed", tok=d)[1]))
+
+        # request by id from the list
+        self.assertEqual(self.call("POST", "/friends/request", {"user_id": users[1]["id"]}, d)[1]["status"], "pending")
+        self.assertEqual(next(x for x in self.call("GET", "/users", tok=d)[1] if x["user"]["username"] == "eli")["status"], "outgoing")
+        inc = next(x for x in self.call("GET", "/users", tok=e)[1] if x["user"]["username"] == "dora")
+        self.assertEqual(inc["status"], "incoming")
+        self.assertEqual(self.call("POST", f"/friends/requests/{inc['request_id']}/accept", tok=e)[0], 200)
+
+        # now friends: full profile + feed
+        eli = next(x for x in self.call("GET", "/users", tok=d)[1] if x["user"]["username"] == "eli")
+        self.assertEqual(eli["status"], "friend")
+        self.assertEqual(eli["user"]["current_streak"], 9)
+        self.assertTrue(any(x["user"]["username"] == "eli" and x["kind"] == "log" for x in self.call("GET", "/feed", tok=d)[1]))
+        # finn still sees nothing of eli
+        self.assertFalse(any(x["user"]["username"] == "eli" for x in self.call("GET", "/feed", tok=f)[1]))
+        self.assertEqual(self.call("POST", "/friends/request", {"user_id": 99999}, d)[0], 404)
+
+    def test_directory_off_elsewhere(self):
+        server.CONFIG["directory"] = False
+        try:
+            tok = self.call("POST", "/auth/register", {"username": "gus", "password": "secret123", "invite_code": "k"})[1]["token"]
+            self.assertEqual(self.call("GET", "/users", tok=tok)[0], 404)
+        finally:
+            server.CONFIG["directory"] = True
 
 
 if __name__ == "__main__":

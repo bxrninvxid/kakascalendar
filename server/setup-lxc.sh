@@ -6,7 +6,8 @@
 #   bash setup-lxc.sh update                pull the latest server.py and restart
 #   bash setup-lxc.sh status                show service state, health and invite code
 #
-# --private  turns on an invite code (generated here) and makes everyone on the server friends.
+# --private        invite code (generated here) + people directory (browse members, send requests)
+# --auto-friends   with --private: everyone on the server is friends automatically instead
 set -euo pipefail
 
 REPO_RAW="${REPO_RAW:-https://raw.githubusercontent.com/bxrninvxid/kakascalendar/main}"
@@ -28,8 +29,10 @@ fetch_server() {
 health() { curl -fsS "http://127.0.0.1:$PORT/health" && echo; }
 
 cmd_server() {
-  local private=0
-  [ "${1:-}" = "--private" ] && private=1
+  local private=0 auto=0
+  for a in "$@"; do
+    case "$a" in --private) private=1 ;; --auto-friends) auto=1 ;; esac
+  done
   c "Installing packages"
   apt-get update -qq
   DEBIAN_FRONTEND=noninteractive apt-get install -y -qq python3 curl ca-certificates openssl >/dev/null
@@ -50,7 +53,7 @@ cmd_server() {
       echo "KAKAS_DB=$DATA_DIR/kakas.db"
       if [ "$private" = 1 ]; then
         echo "KAKAS_INVITE_CODE=$(openssl rand -hex 12)"
-        echo "KAKAS_AUTO_FRIENDS=1"
+        if [ "$auto" = 1 ]; then echo "KAKAS_AUTO_FRIENDS=1"; else echo "KAKAS_DIRECTORY=1"; fi
       fi
     } > "$ENV_FILE"
     chmod 640 "$ENV_FILE"; chgrp kakas "$ENV_FILE"

@@ -390,7 +390,34 @@ private fun FriendsSection(vm: MainVm, state: SocialState, prefs: Prefs) {
                     }
                 }
             }
-            if (state.friends.outgoing.isNotEmpty()) {
+            val people = state.directory?.filter { it.status == "none" || it.status == "outgoing" }
+            if (people != null) {
+                item { SectionTitle("People on this server · ${people.size}") }
+                if (people.isEmpty()) item {
+                    Text(
+                        if (state.directory.orEmpty().isEmpty()) "You're the first one here. Send the app to your friends!"
+                        else "You've added everyone. Popular.",
+                        style = MaterialTheme.typography.bodySmall, color = cs.onSurfaceVariant,
+                        modifier = Modifier.padding(start = 6.dp)
+                    )
+                }
+                items(people, key = { "dir${it.user.id}" }) { entry ->
+                    val u = entry.user
+                    PersonRow(u, if (entry.status == "outgoing") "request sent · waiting for them" else "@${u.username} · Lv ${u.level}") {
+                        if (entry.status == "outgoing") {
+                            OutlinedButton(onClick = { entry.requestId?.let { vm.decline(it) } }) { Text("Requested ✓") }
+                        } else {
+                            Button(onClick = { vm.addFriendById(u.id, u.displayName) }) { Text("➕ Add") }
+                        }
+                    }
+                }
+                item {
+                    Text("Their poops, streaks and photos stay hidden until they accept.",
+                        style = MaterialTheme.typography.labelSmall, color = cs.onSurfaceVariant,
+                        modifier = Modifier.padding(start = 6.dp))
+                }
+            }
+            if (state.friends.outgoing.isNotEmpty() && people == null) {
                 item { SectionTitle("Pending") }
                 items(state.friends.outgoing, key = { "out${it.id}" }) { r ->
                     PersonRow(r.user, "request sent") {

@@ -107,7 +107,7 @@ No public IP? No problem. On any Debian/Ubuntu machine or Proxmox LXC:
 
 ```bash
 curl -fsSLO https://raw.githubusercontent.com/bxrninvxid/kakascalendar/main/server/setup-lxc.sh
-bash setup-lxc.sh server --private          # systemd service + invite code + everyone-is-friends
+bash setup-lxc.sh server --private          # systemd service + invite code + people directory
 bash setup-lxc.sh tunnel squad.yourdomain.com   # Cloudflare Tunnel, HTTPS for free
 ```
 
@@ -116,10 +116,10 @@ Then bake it into your own build in `app/build.gradle.kts`:
 ```kotlin
 buildConfigField("String", "SERVER_URL", "\"https://squad.yourdomain.com\"")
 buildConfigField("String", "INVITE_CODE", "\"<code from setup-lxc.sh status>\"")
-buildConfigField("boolean", "AUTO_SQUAD", "true")
+buildConfigField("boolean", "AUTO_SQUAD", "false")
 ```
 
-The server field disappears from the app, signups need the invite code, and everyone on your server is automatically in the squad.
+The server field disappears from the app and signups need the invite code. Members see a list of everyone on the server and send friend requests from it; nobody sees your poops until they're accepted. Prefer instant friendship? Use `server --private --auto-friends` and `AUTO_SQUAD = true`.
 
 <details>
 <summary>📡 API cheat sheet</summary>

@@ -11,6 +11,7 @@ data class SocialState(
     val feed: List<FeedItem> = emptyList(),
     val friends: FriendsRes = FriendsRes(),
     val board: List<UserDto> = emptyList(),
+    val directory: List<DirectoryEntry>? = null,   // null = server has no directory
     val loading: Boolean = false,
     val loaded: Boolean = false,
     val error: String? = null
@@ -101,7 +102,13 @@ class SocialRepo(private val prefs: PrefsRepo) {
                 val feed = api.feed()
                 val friends = api.friends()
                 val board = api.leaderboard()
-                SocialState(me = me, feed = feed, friends = friends, board = board, loaded = true)
+                val directory = try {
+                    api.directory()
+                } catch (t: Throwable) {
+                    if (t is kotlinx.coroutines.CancellationException || isAuthError(t)) throw t
+                    null
+                }
+                SocialState(me = me, feed = feed, friends = friends, board = board, directory = directory, loaded = true)
             }
         }
         val err = r.errorText()
@@ -134,6 +141,12 @@ class SocialRepo(private val prefs: PrefsRepo) {
     suspend fun addFriend(username: String): String? {
         if (username.isBlank()) return "Enter a username"
         val r = call { it.requestFriend(username.trim()) }
+        refresh()
+        return r.errorText()
+    }
+
+    suspend fun addFriendById(userId: Long): String? {
+        val r = call { it.requestFriendById(userId) }
         refresh()
         return r.errorText()
     }

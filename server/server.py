@@ -13,6 +13,7 @@ Pure Python standard library. No pip install, no framework, no excuses.
 Optional private-server switches (environment variables):
     KAKAS_INVITE_CODE=...   only people who send this code can register
     KAKAS_AUTO_FRIENDS=1    everyone on the server is automatically friends
+    KAKAS_DIRECTORY=1       members can browse everyone on the server and send requests from the list
 """
 
 import base64
@@ -38,7 +39,7 @@ NUDGE_COOLDOWN_MS = 60 * 60 * 1000  # one nudge per friend per hour
 MAX_BODY = 512 * 1024
 
 # Set by make_server()
-CONFIG = {"invite_code": None, "auto_friends": False}
+CONFIG = {"invite_code": None, "auto_friends": False, "directory": False}
 MAX_PHOTO = 300 * 1024  # decoded JPEG bytes
 
 SCHEMA = """
@@ -219,7 +220,8 @@ def i(body, key, lo=0, hi=100_000_000):
 
 def h_health(con, me, body, p, q):
     return {"ok": True, "name": "Kakascalendar Squad Server", "humble": False,
-            "invite_required": bool(CONFIG["invite_code"]), "auto_friends": CONFIG["auto_friends"]}
+            "invite_required": bool(CONFIG["invite_code"]), "auto_friends": CONFIG["auto_friends"],
+            "directory": CONFIG["directory"]}
 
 
 def h_register(con, me, body, p, q):
@@ -357,8 +359,12 @@ def h_request_friend(con, me, body, p, q):
     if CONFIG["auto_friends"]:
         raise ApiError(400, "Everyone on this server is already in your squad")
     mid = me["id"]
-    name = (s(body, "username", "") or "").strip().lower().lstrip("@")
-    other = con.execute("SELECT * FROM users WHERE username = ?", (name,)).fetchone()
+    uid = body.get("user_id")
+    if isinstance(uid, int) and not isinstance(uid, bool):
+        other = get_user(con, uid)
+    else:
+        name = (s(body, "username", "") or "").strip().lower().lstrip("@")
+        other = con.execute("SELECT * FROM users WHERE username = ?", (name,)).fetchone()
     if not other:
         raise ApiError(404, "No user with that username")
     if other["id"] == mid:
@@ -445,6 +451,36 @@ def h_get_photo(con, me, body, p, q):
     return Raw(bytes(row["photo"]), "image/jpeg")
 
 
+def user_basic(row):
+    """What non-friends may see: no stats, no photo."""
+    return {"id": row["id"], "username": row["username"], "display_name": row["display_name"],
+            "avatar": row["avatar"], "level": row["level"]}
+
+
+def h_directory(con, me, body, p, q):
+    if not CONFIG["directory"]:
+        raise ApiError(404, "This server has no people directory")
+    mid = me["id"]
+    friends = friend_ids(con, mid)
+    incoming = {r["requester_id"]: r["id"] for r in con.execute(
+        "SELECT id, requester_id FROM friendships WHERE addressee_id = ? AND status = 'pending'", (mid,))}
+    outgoing = {r["addressee_id"]: r["id"] for r in con.execute(
+        "SELECT id, addressee_id FROM friendships WHERE requester_id = ? AND status = 'pending'", (mid,))}
+    out = []
+    for row in con.execute("SELECT * FROM users WHERE id != ? ORDER BY display_name COLLATE NOCASE", (mid,)):
+        uid = row["id"]
+        if uid in friends:
+            status, rid, user = "friend", None, user_out(row)
+        elif uid in incoming:
+            status, rid, user = "incoming", incoming[uid], user_basic(row)
+        elif uid in outgoing:
+            status, rid, user = "outgoing", outgoing[uid], user_basic(row)
+        else:
+            status, rid, user = "none", None, user_basic(row)
+        out.append({"user": user, "status": status, "request_id": rid})
+    return out
+
+
 def h_leaderboard(con, me, body, p, q):
     out = []
     for uid in friend_ids(con, me["id"]) | {me["id"]}:
@@ -474,6 +510,7 @@ ROUTES = [
     ("DELETE", r"/friends/(\d+)", h_unfriend, True),
     ("POST", r"/nudge/(\d+)", h_nudge, True),
     ("GET", r"/leaderboard", h_leaderboard, True),
+    ("GET", r"/users", h_directory, True),
     ("POST", r"/me/photo", h_set_photo, True),
     ("DELETE", r"/me/photo", h_delete_photo, True),
     ("GET", r"/users/(\d+)/photo", h_get_photo, True),
@@ -564,9 +601,11 @@ def make_handler(store):
     return Handler
 
 
-def make_server(host="0.0.0.0", port=8000, db_path="kakas.db", invite_code=None, auto_friends=False):
+def make_server(host="0.0.0.0", port=8000, db_path="kakas.db", invite_code=None, auto_friends=False,
+                directory=False):
     CONFIG["invite_code"] = invite_code or None
     CONFIG["auto_friends"] = bool(auto_friends)
+    CONFIG["directory"] = bool(directory)
     return ThreadingHTTPServer((host, port), make_handler(Store(db_path)))
 
 
@@ -575,10 +614,12 @@ if __name__ == "__main__":
     db = os.environ.get("KAKAS_DB", "kakas.db")
     invite = os.environ.get("KAKAS_INVITE_CODE", "").strip()
     auto = os.environ.get("KAKAS_AUTO_FRIENDS", "") in ("1", "true", "yes")
+    directory = os.environ.get("KAKAS_DIRECTORY", "") in ("1", "true", "yes")
     host = os.environ.get("HOST", "0.0.0.0")
-    srv = make_server(host=host, port=port, db_path=db, invite_code=invite, auto_friends=auto)
+    srv = make_server(host=host, port=port, db_path=db, invite_code=invite, auto_friends=auto, directory=directory)
     print(f"💩 Kakascalendar Squad Server on http://{host}:{port}  (db: {db}, "
-          f"invite: {'on' if invite else 'off'}, auto-friends: {'on' if auto else 'off'})", flush=True)
+          f"invite: {'on' if invite else 'off'}, auto-friends: {'on' if auto else 'off'}, "
+          f"directory: {'on' if directory else 'off'})", flush=True)
     try:
         srv.serve_forever()
     except KeyboardInterrupt:

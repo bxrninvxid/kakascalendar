@@ -350,6 +350,10 @@ class MainVm(app: Application) : AndroidViewModel(app) {
         onDone(err == null)
     }
 
+    fun addFriendById(id: Long, name: String) = viewModelScope.launch {
+        msg(social.addFriendById(id) ?: "🤝 Request sent to $name")
+    }
+
     fun accept(id: Long) = viewModelScope.launch { social.accept(id)?.let { msg(it) } ?: msg("🤝 You're now friends") }
     fun decline(id: Long) = viewModelScope.launch { social.decline(id)?.let { msg(it) } }
     fun unfriend(id: Long) = viewModelScope.launch { social.unfriend(id)?.let { msg(it) } }
