@@ -75,6 +75,16 @@ git clone https://github.com/<your-username>/kakascalendar.git
 
 ---
 
+## 🍎 iOS
+
+Yes, there's an iPhone version too: SwiftUI with iOS 26 **Liquid Glass**, same features, same Squad server. It lives in `ios/`.
+
+- **With a Mac:** `brew install xcodegen && cd ios && xcodegen && open Kakascalendar.xcodeproj`, then Run.
+- **Without a Mac:** every push builds it on GitHub Actions and drops `Kakascalendar-unsigned.ipa` on the [`ci-ios`](../../tree/ci-ios) branch. Sideload it with [Sideloadly](https://sideloadly.io) or AltStore using your Apple ID.
+- Private build? Set your server and invite code in `ios/Kakascalendar/Flavor.swift`.
+
+---
+
 ## 🌐 Run the Squad server
 
 The entire backend is **one Python file** with zero dependencies. That's not laziness. That's elegance.
