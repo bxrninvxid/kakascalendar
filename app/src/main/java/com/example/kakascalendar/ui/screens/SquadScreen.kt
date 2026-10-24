@@ -53,6 +53,8 @@ fun SquadScreen(vm: MainVm, prefs: Prefs) {
     }
     val state by vm.socialState.collectAsStateWithLifecycle()
     var section by rememberSaveable { mutableIntStateOf(0) }
+    var viewing by remember { mutableStateOf<Int?>(null) }
+    var composing by remember { mutableStateOf(false) }
 
     // light polling while the tab is visible
     LaunchedEffect(Unit) {
@@ -63,6 +65,8 @@ fun SquadScreen(vm: MainVm, prefs: Prefs) {
     }
 
     Column(Modifier.fillMaxSize()) {
+        Spacer(Modifier.height(6.dp))
+        StoriesRow(state.stories, state.me, prefs, onOpen = { viewing = it }, onAdd = { composing = true })
         Row(
             Modifier.padding(horizontal = 16.dp, vertical = 8.dp).fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -78,6 +82,10 @@ fun SquadScreen(vm: MainVm, prefs: Prefs) {
             else -> FriendsSection(vm, state, prefs)
         }
     }
+    viewing?.let { idx ->
+        StoryViewer(vm, state.stories, idx, state.me?.id, onClose = { viewing = null })
+    }
+    if (composing) StoryComposer(vm, onDismiss = { composing = false })
 }
 
 // ───────────────────────── sign in ─────────────────────────

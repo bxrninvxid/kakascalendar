@@ -95,6 +95,48 @@ struct StatusRes: Decodable {
 
 struct Empty: Decodable {}
 
+struct StoryDTO: Decodable, Identifiable, Hashable {
+    let id: Int
+    let kind: String          // photo | text
+    var text: String = ""
+    var bg: Int = 0
+    var emoji: String = ""
+    let createdAt: Int64
+    var seen: Bool = false
+    var views: Int?           // only on your own stories
+
+    enum CodingKeys: String, CodingKey {
+        case id, kind, text, bg, emoji, seen, views
+        case createdAt = "created_at"
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(Int.self, forKey: .id)
+        kind = try c.decode(String.self, forKey: .kind)
+        text = try c.decodeIfPresent(String.self, forKey: .text) ?? ""
+        bg = try c.decodeIfPresent(Int.self, forKey: .bg) ?? 0
+        emoji = try c.decodeIfPresent(String.self, forKey: .emoji) ?? ""
+        createdAt = try c.decode(Int64.self, forKey: .createdAt)
+        seen = try c.decodeIfPresent(Bool.self, forKey: .seen) ?? false
+        views = try c.decodeIfPresent(Int.self, forKey: .views)
+    }
+}
+
+struct StoryGroup: Decodable, Identifiable {
+    let user: UserDTO
+    var stories: [StoryDTO]
+    var allSeen: Bool
+    var id: Int { user.id }
+
+    enum CodingKeys: String, CodingKey {
+        case user, stories
+        case allSeen = "all_seen"
+    }
+}
+
+struct IdRes: Decodable { let id: Int }
+
 // MARK: - Client
 
 struct APIError: LocalizedError {
@@ -175,4 +217,11 @@ struct API {
     func nudge(_ uid: Int) async throws { _ = try await send("POST", "/nudge/\(uid)", as: Empty.self) }
     func leaderboard() async throws -> [UserDTO] { try await send("GET", "/leaderboard") }
     func directory() async throws -> [DirectoryEntry] { try await send("GET", "/users") }
+
+    // stories
+    func stories() async throws -> [StoryGroup] { try await send("GET", "/stories") }
+    func postStory(_ body: [String: Any]) async throws -> IdRes { try await send("POST", "/stories", body) }
+    func viewStory(_ id: Int) async throws { _ = try await send("POST", "/stories/\(id)/view", as: Empty.self) }
+    func storyViewers(_ id: Int) async throws -> [UserDTO] { try await send("GET", "/stories/\(id)/viewers") }
+    func deleteStory(_ id: Int) async throws { _ = try await send("DELETE", "/stories/\(id)", as: Empty.self) }
 }

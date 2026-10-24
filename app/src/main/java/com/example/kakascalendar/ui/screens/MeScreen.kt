@@ -26,6 +26,9 @@ import com.example.kakascalendar.MainVm
 import com.example.kakascalendar.data.Prefs
 import com.example.kakascalendar.domain.Achievement
 import com.example.kakascalendar.domain.Tier
+import com.example.kakascalendar.domain.RANKS
+import com.example.kakascalendar.domain.XP_LOGS_PER_DAY
+import com.example.kakascalendar.domain.MAX_LOGS_PER_DAY
 import com.example.kakascalendar.ui.components.*
 
 @Composable
@@ -85,6 +88,38 @@ fun MeScreen(vm: MainVm, prefs: Prefs, dash: Dash, onBack: () -> Unit, onSetting
                     StatTile("Entries", "${dash.entries.size}", Modifier.weight(1f), "💩")
                     StatTile("Best streak", "${dash.best}d", Modifier.weight(1f), "👑")
                     StatTile("Trophies", "$done/${dash.achievements.size}", Modifier.weight(1f), "🏆")
+                }
+            }
+            item {
+                var expanded by remember { mutableStateOf(false) }
+                GlassCard(onClick = { expanded = !expanded }) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("Rank ladder", style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+                        Text(if (expanded) "Hide ▲" else "Show all ▼", style = MaterialTheme.typography.labelLarge, color = cs.primary)
+                    }
+                    Text("~18 XP per logged day (first $XP_LOGS_PER_DAY logs count) + trophy XP. Max $MAX_LOGS_PER_DAY logs a day.",
+                        style = MaterialTheme.typography.bodySmall, color = cs.onSurfaceVariant)
+                    val current = dash.level.level.coerceAtMost(RANKS.size)
+                    val shown = if (expanded) RANKS.indices.toList()
+                    else listOf(current - 2, current - 1, current).filter { it in RANKS.indices }
+                    Spacer(Modifier.height(8.dp))
+                    shown.forEach { i ->
+                        val r = RANKS[i]
+                        val reached = dash.level.xp >= r.minXp
+                        val isCurrent = i == current - 1
+                        Row(
+                            Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp))
+                                .background(if (isCurrent) cs.primaryContainer else Color.Transparent)
+                                .padding(horizontal = 10.dp, vertical = 7.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(r.emoji, fontSize = 20.sp, modifier = Modifier.width(32.dp).alpha(if (reached) 1f else 0.4f))
+                            Text("${i + 1}. ${r.title}", modifier = Modifier.weight(1f).alpha(if (reached) 1f else 0.55f),
+                                fontWeight = if (isCurrent) FontWeight.ExtraBold else FontWeight.Normal)
+                            Text(if (reached) "✓" else "${r.minXp} XP", style = MaterialTheme.typography.labelMedium,
+                                color = if (reached) cs.primary else cs.onSurfaceVariant)
+                        }
+                    }
                 }
             }
             item {

@@ -10,6 +10,7 @@ final class SocialStore {
     var friends = FriendsRes()
     var board: [UserDTO] = []
     var directory: [DirectoryEntry]?      // nil = server has no directory
+    var stories: [StoryGroup] = []
     var loading = false
     var loaded = false
     var error: String?
@@ -36,7 +37,7 @@ final class SocialStore {
     private func reset() {
         settings.token = nil
         settings.username = nil
-        me = nil; feed = []; friends = FriendsRes(); board = []; directory = nil; loaded = false
+        me = nil; feed = []; friends = FriendsRes(); board = []; directory = nil; stories = []; loaded = false
     }
 
     // MARK: account
@@ -94,18 +95,20 @@ final class SocialStore {
         guard api != nil else { return nil }
         loading = true
         defer { loading = false }
-        let r = await run { api -> (UserDTO, [FeedItem], FriendsRes, [UserDTO], [DirectoryEntry]?) in
+        let r = await run { api -> (UserDTO, [FeedItem], FriendsRes, [UserDTO], [DirectoryEntry]?, [StoryGroup]) in
             async let me = api.me()
             async let feed = api.feed()
             async let friends = api.friends()
             async let board = api.leaderboard()
             let dir: [DirectoryEntry]?
             do { dir = try await api.directory() } catch let e as APIError where !e.isAuth { dir = nil }
-            return try await (me, feed, friends, board, dir)
+            let st: [StoryGroup]
+            do { st = try await api.stories() } catch let e as APIError where !e.isAuth { st = [] }   // older servers
+            return try await (me, feed, friends, board, dir, st)
         }
         switch r {
-        case .success(let (m, f, fr, b, d)):
-            me = m; feed = f; friends = fr; board = b; directory = d; loaded = true; error = nil
+        case .success(let (m, f, fr, b, d, st)):
+            me = m; feed = f; friends = fr; board = b; directory = d; stories = st; loaded = true; error = nil
             settings.friendsCount = fr.friends.count
         case .failure(let e):
             error = e.localizedDescription
@@ -147,6 +150,39 @@ final class SocialStore {
     func nudge(_ uid: Int) async -> String? {
         let r = await run { try await $0.nudge(uid) }
         if case .success = r { await refresh() }
+        return text(r)
+    }
+
+    // MARK: stories
+
+    func postStory(kind: String, text caption: String, bg: Int = 0, emoji: String = "", image: UIImage? = nil) async -> String? {
+        var body: [String: Any] = ["kind": kind, "text": caption.trimmingCharacters(in: .whitespacesAndNewlines), "bg": bg, "emoji": emoji]
+        if let image {
+            guard let b64 = StoryImage.base64(image) else { return "Couldn't read that image. Try another one." }
+            body["image"] = b64
+        }
+        let payload = body
+        let r = await run { try await $0.postStory(payload) }
+        if case .success = r { await refresh() }
+        return self.text(r)
+    }
+
+    func viewStory(_ story: StoryDTO) async {
+        guard !story.seen else { return }
+        for gi in stories.indices {
+            if let si = stories[gi].stories.firstIndex(where: { $0.id == story.id }) {
+                stories[gi].stories[si].seen = true
+                stories[gi].allSeen = stories[gi].stories.allSatisfy(\.seen)
+            }
+        }
+        _ = await run { try await $0.viewStory(story.id) }
+    }
+
+    func storyViewers(_ id: Int) async -> Result<[UserDTO], Error> { await run { try await $0.storyViewers(id) } }
+
+    func deleteStory(_ id: Int) async -> String? {
+        let r = await run { try await $0.deleteStory(id) }
+        await refresh()
         return text(r)
     }
 

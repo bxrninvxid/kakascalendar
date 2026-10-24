@@ -12,6 +12,7 @@ data class SocialState(
     val friends: FriendsRes = FriendsRes(),
     val board: List<UserDto> = emptyList(),
     val directory: List<DirectoryEntry>? = null,   // null = server has no directory
+    val stories: List<StoryGroup> = emptyList(),
     val loading: Boolean = false,
     val loaded: Boolean = false,
     val error: String? = null
@@ -108,7 +109,14 @@ class SocialRepo(private val prefs: PrefsRepo) {
                     if (t is kotlinx.coroutines.CancellationException || isAuthError(t)) throw t
                     null
                 }
-                SocialState(me = me, feed = feed, friends = friends, board = board, directory = directory, loaded = true)
+                val stories = try {
+                    api.stories()
+                } catch (t: Throwable) {
+                    if (t is kotlinx.coroutines.CancellationException || isAuthError(t)) throw t
+                    emptyList()        // older server without stories
+                }
+                SocialState(me = me, feed = feed, friends = friends, board = board, directory = directory,
+                    stories = stories, loaded = true)
             }
         }
         val err = r.errorText()
@@ -155,6 +163,34 @@ class SocialRepo(private val prefs: PrefsRepo) {
     suspend fun decline(requestId: Long) = call { it.decline(requestId) }.errorText().also { refresh() }
     suspend fun unfriend(userId: Long) = call { it.unfriend(userId) }.errorText().also { refresh() }
     suspend fun nudge(userId: Long) = call { it.nudge(userId) }.errorText().also { if (it == null) refresh() }
+
+    // ───────── stories ─────────
+
+    suspend fun postStory(req: PostStoryReq): String? {
+        val r = call { it.postStory(req) }
+        if (r.isSuccess) refresh()
+        return r.errorText()
+    }
+
+    /** Marks a story as seen locally right away, then tells the server. */
+    suspend fun viewStory(story: StoryDto) {
+        if (story.seen) return
+        _state.update { s ->
+            s.copy(stories = s.stories.map { g ->
+                val list = g.stories.map { if (it.id == story.id) it.copy(seen = true) else it }
+                g.copy(stories = list, allSeen = list.all { it.seen })
+            })
+        }
+        call { it.viewStory(story.id) }
+    }
+
+    suspend fun storyViewers(id: Long): Result<List<UserDto>> = call { it.storyViewers(id) }
+
+    suspend fun deleteStory(id: Long): String? {
+        val r = call { it.deleteStory(id) }
+        refresh()
+        return r.errorText()
+    }
 
     // ───────── silent background sync ─────────
 

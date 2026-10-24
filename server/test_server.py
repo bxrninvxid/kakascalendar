@@ -150,6 +150,96 @@ class SquadServerTest(unittest.TestCase):
         self.assertEqual(get(f"/users/{a['id']}/photo", tb)[0], 404)
 
 
+class StoriesAndLimitsTest(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.srv = server.make_server("127.0.0.1", 0, os.path.join(tempfile.mkdtemp(), "s.db"))
+        cls.base = f"http://127.0.0.1:{cls.srv.server_address[1]}"
+        threading.Thread(target=cls.srv.serve_forever, daemon=True).start()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.srv.shutdown()
+
+    call = SquadServerTest.call
+    reg = SquadServerTest.reg
+    befriend = SquadServerTest.befriend
+
+    def test_daily_log_cap(self):
+        tok, _ = self.reg("capper", share="full")
+        for _ in range(server.MAX_LOGS_PER_DAY):
+            self.assertEqual(self.call("POST", "/events", {"kind": "log", "payload": {"type": "4"}}, tok)[0], 200)
+        st, js = self.call("POST", "/events", {"kind": "log", "payload": {"type": "4"}}, tok)
+        self.assertEqual(st, 429)
+        self.assertIn("Daily limit", js["detail"])
+        # achievements aren't capped
+        self.assertEqual(self.call("POST", "/events", {"kind": "achievement", "payload": {"title": "x"}}, tok)[0], 200)
+
+    def test_stories(self):
+        import base64
+        ta, a = self.reg("story_a")
+        tb, b = self.reg("story_b")
+        tc, c = self.reg("story_c")
+        self.befriend(ta, tb, "story_b")
+        jpeg = b"\xff\xd8\xff\xe0" + b"y" * 500
+
+        self.assertEqual(self.call("POST", "/stories", {"kind": "text"}, ta)[0], 400)
+        self.assertEqual(self.call("POST", "/stories", {"kind": "video", "text": "hi"}, ta)[0], 400)
+        self.assertEqual(self.call("POST", "/stories", {"kind": "photo", "image": base64.b64encode(b"GIF8").decode()}, ta)[0], 400)
+        st, t1 = self.call("POST", "/stories", {"kind": "text", "text": "Type 4 today 🍌", "bg": 3, "emoji": "🔥"}, ta)
+        self.assertEqual(st, 200)
+        st, p1 = self.call("POST", "/stories", {"kind": "photo", "image": base64.b64encode(jpeg).decode(), "text": "view"}, ta)
+        self.assertEqual(st, 200)
+
+        # friend sees both, unseen; stranger sees nothing
+        groups = self.call("GET", "/stories", tok=tb)[1]
+        self.assertEqual(len(groups), 1)
+        g = groups[0]
+        self.assertEqual(g["user"]["username"], "story_a")
+        self.assertEqual([x["kind"] for x in g["stories"]], ["text", "photo"])
+        self.assertFalse(g["all_seen"])
+        self.assertNotIn("views", g["stories"][0])
+        self.assertEqual(self.call("GET", "/stories", tok=tc)[1], [])
+        self.assertEqual(self.call("POST", f"/stories/{t1['id']}/view", tok=tc)[0], 404)
+
+        # image download (friend ok, stranger 404)
+        req = urllib.request.Request(f"{self.base}/stories/{p1['id']}/image", headers={"Authorization": "Bearer " + tb})
+        with urllib.request.urlopen(req) as r:
+            self.assertEqual(r.read(), jpeg)
+        self.assertEqual(self.call("GET", f"/stories/{t1['id']}/image", tok=tb)[0], 404)
+
+        # views
+        for sid in (t1["id"], p1["id"]):
+            self.assertEqual(self.call("POST", f"/stories/{sid}/view", tok=tb)[0], 200)
+        self.assertTrue(self.call("GET", "/stories", tok=tb)[1][0]["all_seen"])
+        mine = self.call("GET", "/stories", tok=ta)[1][0]
+        self.assertEqual(mine["stories"][0]["views"], 1)
+        viewers = self.call("GET", f"/stories/{t1['id']}/viewers", tok=ta)[1]
+        self.assertEqual([v["username"] for v in viewers], ["story_b"])
+        self.assertEqual(self.call("GET", f"/stories/{t1['id']}/viewers", tok=tb)[0], 403)
+
+        # privacy "Nothing" blocks posting and hides existing stories
+        self.call("PATCH", "/me", {"share_level": "private"}, ta)
+        self.assertEqual(self.call("POST", "/stories", {"kind": "text", "text": "x"}, ta)[0], 403)
+        self.assertEqual(self.call("GET", "/stories", tok=tb)[1], [])
+        self.call("PATCH", "/me", {"share_level": "stats"}, ta)
+
+        # delete + expiry
+        self.assertEqual(self.call("DELETE", f"/stories/{t1['id']}", tok=ta)[0], 200)
+        self.assertEqual(len(self.call("GET", "/stories", tok=tb)[1][0]["stories"]), 1)
+        old = server.STORY_TTL_MS
+        server.STORY_TTL_MS = -1000          # everything is "expired"
+        try:
+            self.assertEqual(self.call("GET", "/stories", tok=tb)[1], [])
+        finally:
+            server.STORY_TTL_MS = old
+
+        # daily story cap
+        for _ in range(server.MAX_STORIES_PER_DAY):
+            self.assertEqual(self.call("POST", "/stories", {"kind": "text", "emoji": "💩"}, tb)[0], 200)
+        self.assertEqual(self.call("POST", "/stories", {"kind": "text", "emoji": "💩"}, tb)[0], 429)
+
+
 class PrivateServerTest(unittest.TestCase):
     """Invite code + auto-friends mode."""
 

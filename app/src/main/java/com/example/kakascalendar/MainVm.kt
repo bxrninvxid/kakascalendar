@@ -12,6 +12,10 @@ import com.example.kakascalendar.system.Photos
 import com.example.kakascalendar.system.ShareCard
 import com.example.kakascalendar.domain.*
 import com.example.kakascalendar.social.FeedItem
+import com.example.kakascalendar.social.PostStoryReq
+import com.example.kakascalendar.social.StoryDto
+import com.example.kakascalendar.social.UserDto
+import com.example.kakascalendar.social.friendlyError
 import com.example.kakascalendar.social.StatsReq
 import com.example.kakascalendar.system.Reminders
 import com.example.kakascalendar.system.StreakWidget
@@ -101,6 +105,10 @@ class MainVm(app: Application) : AndroidViewModel(app) {
             dash.filter { it.loaded }.collect { d ->
                 val p = prefsRepo.current()
                 val unlocked = d.achievements.filter { it.unlocked }.map { it.id }.toSet()
+                if (!p.ranksV2) {
+                    // New rank ladder: re-baseline silently so nobody gets a fake "rank up"
+                    prefsRepo.setLastLevel(d.level.level)
+                }
                 if (!p.achievementsInit) {
                     prefsRepo.setSeen(unlocked)
                     prefsRepo.setLastLevel(d.level.level)
@@ -114,7 +122,7 @@ class MainVm(app: Application) : AndroidViewModel(app) {
                         launch { social.postEvent("achievement", mapOf("title" to a.title, "emoji" to a.emoji)) }
                     }
                 }
-                if (d.level.level > p.lastLevel) {
+                if (p.ranksV2 && d.level.level > p.lastLevel) {
                     prefsRepo.setLastLevel(d.level.level)
                     if (p.lastLevel > 0) {
                         _events.emit(UiEvent.LevelUp(d.level))
@@ -138,18 +146,31 @@ class MainVm(app: Application) : AndroidViewModel(app) {
 
     // ───────── entries ─────────
 
-    fun save(entry: Entry) = viewModelScope.launch {
-        val isNew = entry.id == 0L
-        dao.upsert(entry)
-        StreakWidget.refresh(getApplication())
-        if (isNew && System.currentTimeMillis() - entry.timestamp < 6 * 3_600_000L) {
-            launch { social.postEvent("log", mapOf("type" to "${entry.type}")) }
+    /** Entries already on that calendar day (excluding the one being edited). */
+    private fun countOnDay(entry: Entry): Int {
+        val day = entry.date()
+        return dash.value.entries.count { it.id != entry.id && it.date() == day }
+    }
+
+    /** Saves the entry. Returns false (and explains why) if that day is already full. */
+    fun save(entry: Entry): Boolean {
+        if (countOnDay(entry) >= MAX_LOGS_PER_DAY) {
+            msg("🚫 That day already has $MAX_LOGS_PER_DAY logs. Even legends have limits.")
+            return false
         }
+        viewModelScope.launch {
+            val isNew = entry.id == 0L
+            dao.upsert(entry)
+            StreakWidget.refresh(getApplication())
+            if (isNew && System.currentTimeMillis() - entry.timestamp < 6 * 3_600_000L) {
+                launch { social.postEvent("log", mapOf("type" to "${entry.type}")) }
+            }
+        }
+        return true
     }
 
     fun quickLog() {
-        save(Entry(timestamp = System.currentTimeMillis(), type = 4, tags = ""))
-        msg("🍌 Quick-logged a perfect Type 4")
+        if (save(Entry(timestamp = System.currentTimeMillis(), type = 4, tags = ""))) msg("🍌 Quick-logged a perfect Type 4")
     }
 
     fun delete(entry: Entry) = viewModelScope.launch {
@@ -353,6 +374,51 @@ class MainVm(app: Application) : AndroidViewModel(app) {
     fun addFriendById(id: Long, name: String) = viewModelScope.launch {
         msg(social.addFriendById(id) ?: "🤝 Request sent to $name")
     }
+
+    // ───────── stories ─────────
+
+    fun postTextStory(text: String, bg: Int, emoji: String, onDone: (Boolean) -> Unit) = viewModelScope.launch {
+        val err = social.postStory(PostStoryReq(kind = "text", text = text.trim(), bg = bg, emoji = emoji))
+        msg(err ?: "📖 Story posted. It disappears in 24 hours.")
+        onDone(err == null)
+    }
+
+    fun postPhotoStory(uri: Uri, caption: String, onDone: (Boolean) -> Unit) = viewModelScope.launch {
+        val b64 = withContext(Dispatchers.IO) {
+            runCatching { Photos.loadScaled(getApplication(), uri)?.let { bmp -> Photos.storyBase64(bmp).also { bmp.recycle() } } }.getOrNull()
+        }
+        if (b64 == null) { msg("Couldn't read that image. Try another one."); onDone(false); return@launch }
+        val err = social.postStory(PostStoryReq(kind = "photo", text = caption.trim(), image = b64))
+        msg(err ?: "📸 Story posted. It disappears in 24 hours.")
+        onDone(err == null)
+    }
+
+    fun viewStory(story: StoryDto) = viewModelScope.launch { social.viewStory(story) }
+
+    fun deleteStory(id: Long) = viewModelScope.launch { msg(social.deleteStory(id) ?: "Story deleted") }
+
+    fun storyViewers(id: Long, onResult: (List<UserDto>) -> Unit) = viewModelScope.launch {
+        val r = social.storyViewers(id)
+        r.exceptionOrNull()?.let { msg(friendlyError(it)) } ?: onResult(r.getOrDefault(emptyList()))
+    }
+
+    /** Text for the "today's log" story template. */
+    fun todayStoryText(): String {
+        val d = dash.value
+        val last = d.entries.firstOrNull { it.date() == java.time.LocalDate.now() } ?: d.entries.firstOrNull()
+        val parts = mutableListOf<String>()
+        if (last != null) {
+            val t = last.stool()
+            parts += "Type ${t.n} · ${t.label}"
+            if (last.rating > 0) parts += "felt ${RATING_LABELS[last.rating - 1].lowercase()}"
+            if (last.wipes > 0) parts += "${last.wipes} wipes"
+        }
+        if (d.streak > 0) parts += "🔥 ${d.streak}-day streak"
+        parts += "Lv ${d.level.level} ${d.level.title}"
+        return parts.joinToString(" · ")
+    }
+
+    fun todayStoryEmoji(): String = dash.value.entries.firstOrNull()?.stool()?.emoji ?: "💩"
 
     fun accept(id: Long) = viewModelScope.launch { social.accept(id)?.let { msg(it) } ?: msg("🤝 You're now friends") }
     fun decline(id: Long) = viewModelScope.launch { social.decline(id)?.let { msg(it) } }

@@ -46,6 +46,7 @@ final class AppSettings {
     var seenAchievements: [String] { didSet { d.set(seenAchievements, forKey: "seenAchievements") } }
     var achievementsInit: Bool { didSet { d.set(achievementsInit, forKey: "achievementsInit") } }
     var lastLevel: Int { didSet { d.set(lastLevel, forKey: "lastLevel") } }
+    var ranksV2: Bool { didSet { d.set(ranksV2, forKey: "ranksV2") } }
     var timerStart: Double { didSet { d.set(timerStart, forKey: "timerStart") } }     // epoch seconds, 0 = off
     var friendsCount: Int { didSet { d.set(friendsCount, forKey: "friendsCount") } }
 
@@ -81,6 +82,7 @@ final class AppSettings {
         seenAchievements = d.stringArray(forKey: "seenAchievements") ?? []
         achievementsInit = bool("achievementsInit", false)
         lastLevel = int("lastLevel", 0)
+        ranksV2 = bool("ranksV2", false)
         timerStart = d.double(forKey: "timerStart")
         friendsCount = int("friendsCount", 0)
     }

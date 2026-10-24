@@ -35,7 +35,8 @@ struct AddEntryView: View {
     @Environment(\.dismiss) private var dismiss
     let initial: Entry?
     var prefillDuration = 0
-    let onSave: (EntryDraft, Entry?) -> Void
+    let onSave: (EntryDraft, Entry?) -> Bool
+    @State var capHit = false
 
     @State var d = EntryDraft()
     @State var loaded = false
@@ -151,11 +152,15 @@ struct AddEntryView: View {
                     Button("Save", systemImage: "checkmark", role: .confirm) {
                         var out = d
                         out.tags = options.filter { d.tags.contains($0) }
-                        onSave(out, initial)
-                        dismiss()
+                        if onSave(out, initial) { dismiss() } else { capHit = true }
                     }
                 }
             }
+        }
+        .alert("Daily limit reached 🚫", isPresented: $capHit) {
+            Button("Fair enough") {}
+        } message: {
+            Text("That day already has \(maxLogsPerDay) logs. Even legends have limits. Pick another day or edit an existing entry.")
         }
         .onAppear {
             guard !loaded else { return }

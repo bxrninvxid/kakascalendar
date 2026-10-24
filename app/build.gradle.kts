@@ -14,8 +14,8 @@ android {
         applicationId = "com.example.kakascalendar"
         minSdk = 26
         targetSdk = 34
-        versionCode = 4
-        versionName = "2.2"
+        versionCode = 6
+        versionName = "2.4"
 
         // ── Build flavor of the Squad ─────────────────────────────
         // Leave empty for the public build (users type a server address).

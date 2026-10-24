@@ -1,11 +1,11 @@
 <div align="center">
 
-# 💩 K A K A S C A L E N D A R &nbsp;2.3 💩
+# 💩 K A K A S C A L E N D A R &nbsp;2.4 💩
 ### 🦸 Stronger. Smarter. Better. 🦸
 #### The greatest poop tracker ever created. Now on Android **and** iPhone.
 
 ![Best App Ever](https://img.shields.io/badge/BEST%20APP%20EVER-still%20undisputed-FFD700?style=for-the-badge)
-![Version](https://img.shields.io/badge/version-2.3-D62839?style=for-the-badge)
+![Version](https://img.shields.io/badge/version-2.4-D62839?style=for-the-badge)
 ![Android](https://img.shields.io/badge/Android-Kotlin%20%2B%20Compose-3DDC84?style=for-the-badge&logo=android&logoColor=white)
 ![iOS](https://img.shields.io/badge/iOS%2026-SwiftUI%20%2B%20Liquid%20Glass-000000?style=for-the-badge&logo=apple&logoColor=white)
 ![Server](https://img.shields.io/badge/Squad%20Server-1%20Python%20file-3776AB?style=for-the-badge&logo=python&logoColor=white)
@@ -23,7 +23,7 @@ Other apps track steps. Cute. Other apps track sleep. Adorable.
 
 **Kakascalendar tracks the one metric that truly matters**, then turns it into streaks, levels, trophies, charts, a social network and a leaderboard. You didn't know you needed this. You do.
 
-Version 1 was perfect. Version 2 was *more* perfect. Version 2.3 runs on two operating systems, because one wasn't enough to contain it.
+Version 1 was perfect. Version 2 was *more* perfect. Version 2.4 runs on two operating systems and now has Stories, because one dimension wasn't enough to contain it.
 
 ---
 
@@ -45,7 +45,8 @@ Version 1 was perfect. Version 2 was *more* perfect. Version 2.3 runs on two ope
 | | | |
 |---|---|---|
 | 🔥 | **Streaks** | Animated counter, weekly strip, personal best. Miss a day? Don't. |
-| ⭐ | **XP & 30+ levels** | From *Toilet Trainee* to *Porcelain God* to **The Homelander of Hygiene**. |
+| ⭐ | **20 ranks + prestige** | From 🧷 *Toilet Trainee* through 📜 *Lord of the Rolls* to 🦸 **The Homelander of Hygiene**, then ★ prestige stars forever. See the [Rank Ladder](#-the-rank-ladder). |
+| 🚫 | **Daily cap** | Max **6 logs a day**. Nobody poops 50 times a day. Nobody. Only the first 3 earn XP, so consistency beats spam. |
 | 🏆 | **35 trophies in 4 tiers** | Bronze, Silver, Gold and **Legendary**. Confetti and a banner every time. |
 | 🧠 | **Smart insights** | Spots your routine, predicts today's visit, catches the coffee effect, flags hard/loose streaks, low water, paper-heavy weeks and suspicious amounts of pooping at work. |
 | 📊 | **Stats** | 7D / 30D / 90D / All, type donut, **Throne map**, average wipes, time-of-day and weekday charts, and a GitHub-style 6-month heatmap. |
@@ -55,6 +56,7 @@ Version 1 was perfect. Version 2 was *more* perfect. Version 2.3 runs on two ope
 ### 👑 The Squad (social, optional)
 | | | |
 |---|---|---|
+| 📖 | **Stories** | Text cards with gradient backgrounds and stickers, photos with captions, or a one-tap *Today's log* card. Gone in 24 hours. See who viewed yours. |
 | 📰 | **Live feed** | Friends' logs, level-ups and trophies. React with 💩🔥👑😂👏. |
 | 🏟️ | **Leaderboard & podium** | Rank by streak, this week, XP or best streak. Gold medal or go home. |
 | 👉 | **Nudges** | Remind a friend it's time. One per hour, we're not monsters. |
@@ -186,8 +188,34 @@ Members browse everyone on the server and send friend requests from the list; no
 | DELETE | `/friends/{id}` | Unfriend |
 | POST | `/nudge/{id}` | Nudge a friend (1 per hour) |
 | GET | `/leaderboard` | You + friends, ranked |
+| GET / POST | `/stories` | Friends' stories from the last 24 h, grouped by person / post a text or photo story (10 per day) |
+| GET | `/stories/{id}/image` | A photo story's image |
+| POST | `/stories/{id}/view` | Mark a story as seen |
+| GET | `/stories/{id}/viewers` | Who saw your story (author only) |
+| DELETE | `/stories/{id}` | Delete your story |
 
 </details>
+
+---
+
+## 🪜 The Rank Ladder
+
+Earn XP every day you show up: **+5** for logging at all, and **10 XP** for each of your first **3** logs (+2 for a rating, +2 for a comment, +1 for tags). Trophies add their own XP on top. That's roughly **18 XP per day**, so the summit takes real dedication.
+
+| # | Rank | XP | # | Rank | XP |
+|---|---|---|---|---|---|
+| 1 | 🧷 Toilet Trainee | 0 | 11 | 🔧 Plumbing Baron | 2,900 |
+| 2 | 🐣 Potty Rookie | 60 | 12 | 💦 Bidet Duke | 3,600 |
+| 3 | 🥣 Bowl Apprentice | 150 | 13 | 📜 Lord of the Rolls | 4,400 |
+| 4 | 🎖️ Flush Cadet | 300 | 14 | 🤴 Porcelain Prince | 5,300 |
+| 5 | 🔥 Seat Warmer | 500 | 15 | 👑 Throne King | 6,300 |
+| 6 | 📅 Regular Regular | 750 | 16 | 🕌 Sultan of Squat | 7,500 |
+| 7 | 🧻 Paper Squire | 1,050 | 17 | 🏛️ Emperor of Evacuation | 9,000 |
+| 8 | 🧭 Porcelain Scout | 1,400 | 18 | ⚡ Porcelain God | 11,000 |
+| 9 | 🌀 Flush Master | 1,800 | 19 | 🌟 Legend of the Loo | 13,500 |
+| 10 | 🛡️ Throne Knight | 2,300 | 20 | 🦸 **The Homelander of Hygiene** | 16,500 |
+
+Beyond the top, every **3,000 XP** adds a prestige ★. Infinite glory, as it should be.
 
 ---
 
@@ -210,7 +238,7 @@ Members browse everyone on the server and send friend requests from the list; no
 
 ## 🆚 Kakascalendar vs. The Rest
 
-| | Kakascalendar 2.3 | Everything else |
+| | Kakascalendar 2.4 | Everything else |
 |---|:---:|:---:|
 | Android **and** iPhone | ✅ | 🤷 |
 | Streaks, XP and 35 trophies | ✅ | ❌ |
@@ -226,7 +254,7 @@ Members browse everyone on the server and send friend requests from the list; no
 
 ## 💬 What People Are Saying
 
-> ⭐⭐⭐⭐⭐ *"Version 2 made version 1 look like a rough draft. Version 2.3 made version 2 look like a napkin sketch."*
+> ⭐⭐⭐⭐⭐ *"Version 2 made version 1 look like a rough draft. Version 2.4 made version 2 look like a napkin sketch."*
 > — **Me**
 
 > ⭐⭐⭐⭐⭐ *"I got nudged at 7 AM. I have never felt so seen."*

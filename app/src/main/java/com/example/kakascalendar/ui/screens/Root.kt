@@ -70,7 +70,7 @@ fun AppRoot(vm: MainVm, prefs: Prefs) {
                 }
                 is UiEvent.LevelUp -> {
                     confetti++
-                    banner = Banner("⬆️", "Level ${ev.level.level}!", "You are now a ${ev.level.title}")
+                    banner = Banner(ev.level.emoji, "Rank up! Level ${ev.level.level}", "You are now a ${ev.level.title}")
                 }
                 is UiEvent.Message -> scope.launch {
                     snack.currentSnackbarData?.dismiss()
@@ -176,7 +176,7 @@ fun AppRoot(vm: MainVm, prefs: Prefs) {
             customTags = prefs.customTags,
             prefillDuration = prefillDuration,
             onDismiss = { sheetOpen = false; editing = null },
-            onSave = { vm.save(it); sheetOpen = false; editing = null }
+            onSave = { if (vm.save(it)) { sheetOpen = false; editing = null } }
         )
     }
 }

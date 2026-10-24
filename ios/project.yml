@@ -16,7 +16,7 @@ targets:
       path: Kakascalendar/Info.plist
       properties:
         CFBundleDisplayName: Kakascalendar
-        CFBundleShortVersionString: "2.3"
+        CFBundleShortVersionString: "2.4"
         CFBundleVersion: "4"
         UILaunchScreen: {}
         UIApplicationSceneManifest:

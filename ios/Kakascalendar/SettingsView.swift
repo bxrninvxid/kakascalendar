@@ -145,7 +145,7 @@ struct SettingsView: View {
             Section {
                 VStack(spacing: 4) {
                     Text("💩").font(.largeTitle)
-                    Text("Kakascalendar 2.3").font(.headline)
+                    Text("Kakascalendar 2.4").font(.headline)
                     Text("Stronger. Smarter. Better.").font(.caption).foregroundStyle(.secondary)
                 }
                 .frame(maxWidth: .infinity)

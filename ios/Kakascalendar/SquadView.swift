@@ -3,7 +3,10 @@ import SwiftUI
 struct SquadView: View {
     @Environment(AppSettings.self) private var settings
     @Environment(SocialStore.self) private var social
+    let dash: Dash
     @State var section = 0
+    @State var viewing: Int?
+    @State var composing = false
 
     var body: some View {
         NavigationStack {
@@ -13,6 +16,7 @@ struct SquadView: View {
                 } else {
                     ScrollView {
                         VStack(spacing: 12) {
+                            StoriesRow(onOpen: { viewing = $0 }, onAdd: { composing = true })
                             Picker("Section", selection: $section) {
                                 Text("📰 Feed").tag(0)
                                 Text("🏆 Ranks").tag(1)
@@ -36,6 +40,10 @@ struct SquadView: View {
                         .padding()
                     }
                     .refreshable { await social.refresh() }
+                    .fullScreenCover(item: Binding(get: { viewing.map { StoryStart(index: $0) } }, set: { viewing = $0?.index })) { s in
+                        StoryViewer(startGroup: s.index)
+                    }
+                    .sheet(isPresented: $composing) { StoryComposer(dash: dash) }
                     .task {
                         while !Task.isCancelled {
                             await social.refresh()
@@ -49,6 +57,11 @@ struct SquadView: View {
             .navigationSubtitle("Friends, feed & bragging rights")
         }
     }
+}
+
+struct StoryStart: Identifiable {
+    let index: Int
+    var id: Int { index }
 }
 
 // MARK: - Sign in

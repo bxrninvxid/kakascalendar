@@ -66,6 +66,7 @@ data class Prefs(
     val seenAchievements: Set<String> = emptySet(),
     val achievementsInit: Boolean = false,
     val lastLevel: Int = 0,
+    val ranksV2: Boolean = false,
     val timerStart: Long = 0L,
     val friendsCount: Int = 0
 ) {
@@ -104,6 +105,7 @@ class PrefsRepo(private val ctx: Context) {
         val seen = stringSetPreferencesKey("seen_achievements")
         val achInit = booleanPreferencesKey("achievements_init")
         val lastLevel = intPreferencesKey("last_level")
+        val ranksV2 = booleanPreferencesKey("ranks_v2")
         val timer = longPreferencesKey("timer_start")
         val friends = intPreferencesKey("friends_count")
     }
@@ -141,6 +143,7 @@ class PrefsRepo(private val ctx: Context) {
                 seenAchievements = p[K.seen] ?: emptySet(),
                 achievementsInit = p[K.achInit] ?: false,
                 lastLevel = p[K.lastLevel] ?: 0,
+                ranksV2 = p[K.ranksV2] ?: false,
                 timerStart = p[K.timer] ?: 0L,
                 friendsCount = p[K.friends] ?: 0
             )
@@ -204,7 +207,7 @@ class PrefsRepo(private val ctx: Context) {
     suspend fun setShareLevel(level: String) = edit { it[K.share] = level }
     suspend fun setTimer(start: Long) = edit { it[K.timer] = start }
     suspend fun setFriendsCount(n: Int) = edit { it[K.friends] = n }
-    suspend fun setLastLevel(level: Int) = edit { it[K.lastLevel] = level }
+    suspend fun setLastLevel(level: Int) = edit { it[K.lastLevel] = level; it[K.ranksV2] = true }
 
     suspend fun setSeen(ids: Set<String>) = edit {
         it[K.seen] = ids; it[K.achInit] = true

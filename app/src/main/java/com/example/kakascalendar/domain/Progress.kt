@@ -67,34 +67,73 @@ fun achievements(e: List<Entry>, friends: Int = 0, waterGoalDays: Int = 0): List
     )
 }
 
-data class LevelInfo(val level: Int, val title: String, val xp: Int, val into: Int, val need: Int) {
+data class LevelInfo(val level: Int, val title: String, val emoji: String, val xp: Int, val into: Int, val need: Int) {
     val fraction get() = if (need == 0) 1f else into.toFloat() / need
 }
 
-fun xpFor(e: List<Entry>, ach: List<Achievement>): Int =
-    e.sumOf { 10 + (if (it.comment.isNotBlank()) 3 else 0) + (if (it.rating > 0) 2 else 0) + (if (it.tags.isNotBlank()) 2 else 0) } +
-        ach.filter { it.unlocked }.sumOf { it.xp }
+/** One rung of the ladder: title, emoji and the total XP needed to reach it. */
+data class Rank(val title: String, val emoji: String, val minXp: Int)
 
-private fun xpToNext(level: Int) = 100 + (level - 1) * 60
+/**
+ * The rank ladder. A normal day (1 log + a rating or tag) is worth ~18 XP, so:
+ * ~1 week → Bowl Apprentice, ~1 month → Regular Regular, ~6 months → Lord of the Rolls,
+ * ~1 year (with trophies) → Emperor of Evacuation. The top takes real dedication.
+ */
+val RANKS = listOf(
+    Rank("Toilet Trainee", "🧷", 0),
+    Rank("Potty Rookie", "🐣", 60),
+    Rank("Bowl Apprentice", "🥣", 150),
+    Rank("Flush Cadet", "🎖️", 300),
+    Rank("Seat Warmer", "🔥", 500),
+    Rank("Regular Regular", "📅", 750),
+    Rank("Paper Squire", "🧻", 1050),
+    Rank("Porcelain Scout", "🧭", 1400),
+    Rank("Flush Master", "🌀", 1800),
+    Rank("Throne Knight", "🛡️", 2300),
+    Rank("Plumbing Baron", "🔧", 2900),
+    Rank("Bidet Duke", "💦", 3600),
+    Rank("Lord of the Rolls", "📜", 4400),
+    Rank("Porcelain Prince", "🤴", 5300),
+    Rank("Throne King", "👑", 6300),
+    Rank("Sultan of Squat", "🕌", 7500),
+    Rank("Emperor of Evacuation", "🏛️", 9000),
+    Rank("Porcelain God", "⚡", 11000),
+    Rank("Legend of the Loo", "🌟", 13500),
+    Rank("The Homelander of Hygiene", "🦸", 16500)
+)
+private const val PRESTIGE_STEP = 3000
+
+/** Logs beyond this per day still count for stats, but earn no XP. */
+const val XP_LOGS_PER_DAY = 3
+
+/**
+ * XP rules (anti-spam):
+ * - first 3 logs of a day: 10 XP each, +2 for a rating, +2 for a comment, +1 for tags
+ * - +5 for every day you log at all (consistency beats volume)
+ * - plus the XP of every unlocked trophy
+ */
+fun xpFor(e: List<Entry>, ach: List<Achievement>): Int {
+    val byDay = e.groupBy { it.date() }
+    val logXp = byDay.values.sumOf { day ->
+        5 + day.sortedBy { it.timestamp }.take(XP_LOGS_PER_DAY).sumOf {
+            10 + (if (it.rating > 0) 2 else 0) + (if (it.comment.isNotBlank()) 2 else 0) + (if (it.tags.isNotBlank()) 1 else 0)
+        }
+    }
+    return logXp + ach.filter { it.unlocked }.sumOf { it.xp }
+}
 
 fun levelFor(xp: Int): LevelInfo {
-    var level = 1
-    var rem = xp
-    while (rem >= xpToNext(level)) {
-        rem -= xpToNext(level)
-        level++
+    val idx = RANKS.indexOfLast { xp >= it.minXp }.coerceAtLeast(0)
+    val rank = RANKS[idx]
+    if (idx < RANKS.lastIndex) {
+        val next = RANKS[idx + 1]
+        return LevelInfo(idx + 1, rank.title, rank.emoji, xp, xp - rank.minXp, next.minXp - rank.minXp)
     }
-    return LevelInfo(level, levelTitle(level), xp, rem, xpToNext(level))
+    // Prestige: every 3000 XP past the top adds a star
+    val over = xp - rank.minXp
+    val stars = over / PRESTIGE_STEP
+    val title = if (stars == 0) rank.title else "${rank.title} ${"★".repeat(stars.coerceAtMost(5))}${if (stars > 5) "+$stars" else ""}"
+    return LevelInfo(RANKS.size + stars, title, rank.emoji, xp, over % PRESTIGE_STEP, PRESTIGE_STEP)
 }
 
-fun levelTitle(level: Int): String = when {
-    level >= 30 -> "The Homelander of Hygiene"
-    level >= 25 -> "Porcelain God"
-    level >= 20 -> "Supreme Flusher"
-    level >= 16 -> "Throne Lord"
-    level >= 12 -> "Porcelain Knight"
-    level >= 8 -> "Flush Master"
-    level >= 5 -> "Regular Regular"
-    level >= 3 -> "Bowl Apprentice"
-    else -> "Toilet Trainee"
-}
+fun levelTitle(level: Int): String = RANKS.getOrNull(level - 1)?.title ?: RANKS.last().title

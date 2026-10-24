@@ -116,6 +116,39 @@ data class ReactReq(val emoji: String)
 @Serializable
 data class PhotoReq(val data: String)
 
+// ───────── Stories ─────────
+
+@Serializable
+data class StoryDto(
+    val id: Long,
+    val kind: String,                    // photo | text
+    val text: String = "",
+    val bg: Int = 0,
+    val emoji: String = "",
+    @SerialName("created_at") val createdAt: Long,
+    val seen: Boolean = false,
+    val views: Int? = null               // only on your own stories
+)
+
+@Serializable
+data class StoryGroup(
+    val user: UserDto,
+    val stories: List<StoryDto>,
+    @SerialName("all_seen") val allSeen: Boolean = false
+)
+
+@Serializable
+data class PostStoryReq(
+    val kind: String,
+    val text: String = "",
+    val bg: Int = 0,
+    val emoji: String = "",
+    val image: String? = null
+)
+
+@Serializable
+data class IdRes(val id: Long = 0)
+
 @Serializable
 data class StatusRes(val status: String = "", val active: Boolean = false, val ok: Boolean = false)
 
@@ -177,6 +210,12 @@ class Api(base: String, private val token: String?) {
     suspend fun uploadPhoto(base64Jpeg: String): UserDto =
         client.post("$base/me/photo") { auth(); jsonBody(PhotoReq(base64Jpeg)) }.body()
     suspend fun deletePhoto(): UserDto = client.delete("$base/me/photo") { auth() }.body()
+
+    suspend fun stories(): List<StoryGroup> = client.get("$base/stories") { auth() }.body()
+    suspend fun postStory(r: PostStoryReq): IdRes = client.post("$base/stories") { auth(); jsonBody(r) }.body()
+    suspend fun viewStory(id: Long) { client.post("$base/stories/$id/view") { auth() } }
+    suspend fun storyViewers(id: Long): List<UserDto> = client.get("$base/stories/$id/viewers") { auth() }.body()
+    suspend fun deleteStory(id: Long) { client.delete("$base/stories/$id") { auth() } }
 
     suspend fun leaderboard(): List<UserDto> = client.get("$base/leaderboard") { auth() }.body()
 }

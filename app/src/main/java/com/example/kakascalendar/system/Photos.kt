@@ -48,6 +48,47 @@ object Photos {
         return square
     }
 
+    /** Rotation-corrected bitmap whose longest side is at most [maxSide] px (for stories). */
+    fun loadScaled(ctx: Context, uri: Uri, maxSide: Int = 1280): Bitmap? {
+        val resolver = ctx.contentResolver
+        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        resolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, bounds) } ?: return null
+        if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return null
+        var sample = 1
+        while (maxOf(bounds.outWidth, bounds.outHeight) / (sample * 2) >= maxSide) sample *= 2
+        val raw = resolver.openInputStream(uri)?.use {
+            BitmapFactory.decodeStream(it, null, BitmapFactory.Options().apply { inSampleSize = sample })
+        } ?: return null
+        val rotation = runCatching {
+            resolver.openInputStream(uri)?.use {
+                when (ExifInterface(it).getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)) {
+                    ExifInterface.ORIENTATION_ROTATE_90 -> 90f
+                    ExifInterface.ORIENTATION_ROTATE_180 -> 180f
+                    ExifInterface.ORIENTATION_ROTATE_270 -> 270f
+                    else -> 0f
+                }
+            } ?: 0f
+        }.getOrDefault(0f)
+        val scale = (maxSide.toFloat() / maxOf(raw.width, raw.height)).coerceAtMost(1f)
+        val m = Matrix().apply { if (scale < 1f) postScale(scale, scale); if (rotation != 0f) postRotate(rotation) }
+        val out = Bitmap.createBitmap(raw, 0, 0, raw.width, raw.height, m, true)
+        if (out != raw) raw.recycle()
+        return out
+    }
+
+    /** JPEG under ~550 KB for a story, base64-encoded. */
+    fun storyBase64(bmp: Bitmap): String {
+        var quality = 82
+        var bytes: ByteArray
+        do {
+            val out = ByteArrayOutputStream()
+            bmp.compress(Bitmap.CompressFormat.JPEG, quality, out)
+            bytes = out.toByteArray()
+            quality -= 12
+        } while (bytes.size > 550 * 1024 && quality > 30)
+        return Base64.encodeToString(bytes, Base64.NO_WRAP)
+    }
+
     /** Saves the avatar to app storage under a fresh name (so image caches refresh) and returns its path. */
     fun saveAvatar(ctx: Context, bmp: Bitmap): String {
         ctx.filesDir.listFiles { f -> f.name.startsWith("avatar_") }?.forEach { it.delete() }

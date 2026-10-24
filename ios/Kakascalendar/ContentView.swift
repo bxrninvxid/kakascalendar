@@ -71,7 +71,7 @@ struct ContentView: View {
                 StatsView(dash: dash)
             }
             Tab("Squad", systemImage: "person.3.fill", value: AppTab.squad) {
-                SquadView()
+                SquadView(dash: dash)
             }
         }
         .tabBarMinimizeBehavior(.onScrollDown)
@@ -117,7 +117,21 @@ struct ContentView: View {
 
     private func edit(_ e: Entry) { addSheet = AddSheetState(entry: e, duration: 0) }
 
-    private func save(_ draft: EntryDraft, _ existing: Entry?) {
+    /// How many logs already exist on that calendar day (optionally ignoring one entry being edited).
+    private func countOnDay(_ date: Date, excluding: Entry? = nil) -> Int {
+        let day = Calendar.current.startOfDay(for: date)
+        return entries.filter { $0.day == day && $0 !== excluding }.count
+    }
+
+    private func overCap(_ date: Date, excluding: Entry? = nil) -> Bool {
+        guard countOnDay(date, excluding: excluding) >= maxLogsPerDay else { return false }
+        ui.show("🚫 That day already has \(maxLogsPerDay) logs. Even legends have limits.")
+        return true
+    }
+
+    @discardableResult
+    private func save(_ draft: EntryDraft, _ existing: Entry?) -> Bool {
+        if overCap(draft.timestamp, excluding: existing) { return false }
         if let e = existing {
             draft.apply(to: e)
         } else {
@@ -130,6 +144,7 @@ struct ContentView: View {
         }
         try? ctx.save()
         if settings.haptics { ui.haptic += 1 }
+        return true
     }
 
     private func delete(_ e: Entry) {
@@ -145,6 +160,7 @@ struct ContentView: View {
     }
 
     private func quickLog() {
+        if overCap(.now) { return }
         ctx.insert(Entry(timestamp: .now, type: 4))
         try? ctx.save()
         Task { await social.postEvent("log", ["type": "4"]) }
@@ -180,7 +196,13 @@ struct ContentView: View {
             settings.seenAchievements = unlocked.map(\.id)
             settings.lastLevel = d.level.level
             settings.achievementsInit = true
+            settings.ranksV2 = true
             return
+        }
+        if !settings.ranksV2 {
+            // new rank ladder: re-baseline quietly instead of firing a fake level-up
+            settings.lastLevel = d.level.level
+            settings.ranksV2 = true
         }
         let fresh = unlocked.filter { !settings.seenAchievements.contains($0.id) }
         if !fresh.isEmpty {
@@ -194,7 +216,7 @@ struct ContentView: View {
             let first = settings.lastLevel == 0
             settings.lastLevel = d.level.level
             if !first {
-                ui.celebrate(Banner(emoji: "⬆️", title: "Level \(d.level.level)!", subtitle: "You are now a \(d.level.title)"))
+                ui.celebrate(Banner(emoji: d.level.emoji, title: "Rank up! Level \(d.level.level)", subtitle: "You are now a \(d.level.title)"))
                 Task { await social.postEvent("level", ["level": "\(d.level.level)", "title": d.level.title]) }
             }
         }

@@ -69,36 +69,72 @@ func achievements(_ e: [Entry], friends: Int = 0, waterGoalDays: Int = 0) -> [Ac
 struct LevelInfo {
     let level: Int
     let title: String
+    let emoji: String
     let xp: Int
     let into: Int
     let need: Int
     var fraction: Double { need == 0 ? 1 : Double(into) / Double(need) }
 }
 
-func xpFor(_ e: [Entry], _ ach: [Achievement]) -> Int {
-    e.reduce(0) { sum, x in
-        sum + 10 + (x.comment.isEmpty ? 0 : 3) + (x.rating > 0 ? 2 : 0) + (x.tags.isEmpty ? 0 : 2)
-    } + ach.filter(\.unlocked).reduce(0) { $0 + $1.xp }
+struct Rank: Identifiable {
+    let title: String
+    let emoji: String
+    let minXp: Int
+    var id: String { title }
 }
 
-private func xpToNext(_ level: Int) -> Int { 100 + (level - 1) * 60 }
+/// The rank ladder. ~18 XP per logged day, so the top takes well over a year of dedication.
+let RANKS: [Rank] = [
+    Rank(title: "Toilet Trainee", emoji: "🧷", minXp: 0),
+    Rank(title: "Potty Rookie", emoji: "🐣", minXp: 60),
+    Rank(title: "Bowl Apprentice", emoji: "🥣", minXp: 150),
+    Rank(title: "Flush Cadet", emoji: "🎖️", minXp: 300),
+    Rank(title: "Seat Warmer", emoji: "🔥", minXp: 500),
+    Rank(title: "Regular Regular", emoji: "📅", minXp: 750),
+    Rank(title: "Paper Squire", emoji: "🧻", minXp: 1050),
+    Rank(title: "Porcelain Scout", emoji: "🧭", minXp: 1400),
+    Rank(title: "Flush Master", emoji: "🌀", minXp: 1800),
+    Rank(title: "Throne Knight", emoji: "🛡️", minXp: 2300),
+    Rank(title: "Plumbing Baron", emoji: "🔧", minXp: 2900),
+    Rank(title: "Bidet Duke", emoji: "💦", minXp: 3600),
+    Rank(title: "Lord of the Rolls", emoji: "📜", minXp: 4400),
+    Rank(title: "Porcelain Prince", emoji: "🤴", minXp: 5300),
+    Rank(title: "Throne King", emoji: "👑", minXp: 6300),
+    Rank(title: "Sultan of Squat", emoji: "🕌", minXp: 7500),
+    Rank(title: "Emperor of Evacuation", emoji: "🏛️", minXp: 9000),
+    Rank(title: "Porcelain God", emoji: "⚡", minXp: 11000),
+    Rank(title: "Legend of the Loo", emoji: "🌟", minXp: 13500),
+    Rank(title: "The Homelander of Hygiene", emoji: "🦸", minXp: 16500)
+]
+
+let prestigeStep = 3000
+/// Logs beyond this per day still count for stats but earn no XP.
+let xpLogsPerDay = 3
+/// Hard cap: nobody poops more than this in a day. Nobody.
+let maxLogsPerDay = 6
+
+/// XP: +5 per logged day, first 3 logs of a day 10 XP each (+2 rating, +2 comment, +1 tags), plus trophy XP.
+func xpFor(_ e: [Entry], _ ach: [Achievement]) -> Int {
+    let byDay = Dictionary(grouping: e, by: \.day)
+    let logXp = byDay.values.reduce(0) { sum, day in
+        sum + 5 + day.sorted { $0.timestamp < $1.timestamp }.prefix(xpLogsPerDay).reduce(0) { s, x in
+            s + 10 + (x.rating > 0 ? 2 : 0) + (x.comment.isEmpty ? 0 : 2) + (x.tags.isEmpty ? 0 : 1)
+        }
+    }
+    return logXp + ach.filter(\.unlocked).reduce(0) { $0 + $1.xp }
+}
 
 func levelFor(_ xp: Int) -> LevelInfo {
-    var level = 1, rem = xp
-    while rem >= xpToNext(level) { rem -= xpToNext(level); level += 1 }
-    return LevelInfo(level: level, title: levelTitle(level), xp: xp, into: rem, need: xpToNext(level))
+    let idx = max(RANKS.lastIndex { xp >= $0.minXp } ?? 0, 0)
+    let rank = RANKS[idx]
+    if idx < RANKS.count - 1 {
+        let next = RANKS[idx + 1]
+        return LevelInfo(level: idx + 1, title: rank.title, emoji: rank.emoji, xp: xp, into: xp - rank.minXp, need: next.minXp - rank.minXp)
+    }
+    let over = xp - rank.minXp
+    let stars = over / prestigeStep
+    let title = stars == 0 ? rank.title : "\(rank.title) \(String(repeating: "★", count: min(stars, 5)))\(stars > 5 ? "+\(stars)" : "")"
+    return LevelInfo(level: RANKS.count + stars, title: title, emoji: rank.emoji, xp: xp, into: over % prestigeStep, need: prestigeStep)
 }
 
-func levelTitle(_ level: Int) -> String {
-    switch level {
-    case 30...: return "The Homelander of Hygiene"
-    case 25...: return "Porcelain God"
-    case 20...: return "Supreme Flusher"
-    case 16...: return "Throne Lord"
-    case 12...: return "Porcelain Knight"
-    case 8...: return "Flush Master"
-    case 5...: return "Regular Regular"
-    case 3...: return "Bowl Apprentice"
-    default: return "Toilet Trainee"
-    }
-}
+func levelTitle(_ level: Int) -> String { level >= 1 && level <= RANKS.count ? RANKS[level - 1].title : RANKS.last!.title }

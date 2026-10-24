@@ -36,7 +36,12 @@ EVENT_KINDS = {"log", "achievement", "level"}
 REACTIONS = {"💩", "🔥", "👑", "😂", "👏"}
 SHARE_LEVELS = {"full", "stats", "private"}
 NUDGE_COOLDOWN_MS = 60 * 60 * 1000  # one nudge per friend per hour
-MAX_BODY = 512 * 1024
+MAX_BODY = 1024 * 1024
+MAX_LOGS_PER_DAY = 6          # nobody genuinely goes more than this
+MAX_STORIES_PER_DAY = 10
+STORY_TTL_MS = 24 * 60 * 60 * 1000
+MAX_STORY_IMAGE = 600 * 1024  # decoded JPEG bytes
+STORY_KINDS = {"photo", "text"}
 
 # Set by make_server()
 CONFIG = {"invite_code": None, "auto_friends": False, "directory": False}
@@ -83,6 +88,23 @@ CREATE TABLE IF NOT EXISTS events (
     created_at INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_events_user ON events(user_id, id);
+CREATE TABLE IF NOT EXISTS stories (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    kind TEXT NOT NULL,
+    text TEXT NOT NULL DEFAULT '',
+    bg INTEGER NOT NULL DEFAULT 0,
+    emoji TEXT NOT NULL DEFAULT '',
+    image BLOB,
+    created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_stories_user ON stories(user_id, created_at);
+CREATE TABLE IF NOT EXISTS story_views (
+    story_id INTEGER NOT NULL REFERENCES stories(id) ON DELETE CASCADE,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    viewed_at INTEGER NOT NULL,
+    PRIMARY KEY (story_id, user_id)
+);
 CREATE TABLE IF NOT EXISTS reactions (
     event_id INTEGER NOT NULL REFERENCES events(id) ON DELETE CASCADE,
     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -293,6 +315,12 @@ def h_post_event(con, me, body, p, q):
         raise ApiError(400, "Unknown event kind")
     if not isinstance(payload, dict):
         raise ApiError(400, "'payload' must be an object")
+    if kind == "log":
+        since = now_ms() - 24 * 60 * 60 * 1000
+        n = con.execute("SELECT COUNT(*) AS n FROM events WHERE user_id = ? AND kind = 'log' AND created_at > ?",
+                        (me["id"], since)).fetchone()["n"]
+        if n >= MAX_LOGS_PER_DAY:
+            raise ApiError(429, f"Daily limit reached ({MAX_LOGS_PER_DAY} logs). Even legends have limits.")
     share = me["share_level"]
     if share == "private" or (kind == "log" and share != "full"):
         return {"stored": False}
@@ -451,6 +479,120 @@ def h_get_photo(con, me, body, p, q):
     return Raw(bytes(row["photo"]), "image/jpeg")
 
 
+# ───────────────────────── stories ─────────────────────────
+
+def purge_stories(con):
+    con.execute("DELETE FROM stories WHERE created_at < ?", (now_ms() - STORY_TTL_MS,))
+
+
+def story_visible(con, me_id, row):
+    if row["user_id"] == me_id:
+        return True
+    if row["user_id"] not in friend_ids(con, me_id):
+        return False
+    return get_user(con, row["user_id"])["share_level"] != "private"
+
+
+def h_post_story(con, me, body, p, q):
+    if me["share_level"] == "private":
+        raise ApiError(403, "Your privacy is set to Nothing, so stories are off. Change it in Settings.")
+    kind = s(body, "kind", "")
+    if kind not in STORY_KINDS:
+        raise ApiError(400, "Story kind must be photo or text")
+    text = (s(body, "text", "", 300) or "").strip()
+    emoji = (s(body, "emoji", "", 16) or "")
+    bg = body.get("bg", 0)
+    if not isinstance(bg, int) or isinstance(bg, bool) or not 0 <= bg < 64:
+        raise ApiError(400, "'bg' must be a small number")
+    image = None
+    if kind == "photo":
+        data = body.get("image")
+        if not isinstance(data, str) or not data:
+            raise ApiError(400, "A photo story needs an image")
+        try:
+            image = base64.b64decode(data, validate=True)
+        except (binascii.Error, ValueError):
+            raise ApiError(400, "'image' is not valid base64")
+        if len(image) > MAX_STORY_IMAGE:
+            raise ApiError(413, "Photo too large (max 600 KB)")
+        if not image.startswith(b"\xff\xd8"):
+            raise ApiError(400, "Photo must be a JPEG")
+    elif not text and not emoji:
+        raise ApiError(400, "Write something or pick an emoji")
+    since = now_ms() - 24 * 60 * 60 * 1000
+    n = con.execute("SELECT COUNT(*) AS n FROM stories WHERE user_id = ? AND created_at > ?", (me["id"], since)).fetchone()["n"]
+    if n >= MAX_STORIES_PER_DAY:
+        raise ApiError(429, f"That's {MAX_STORIES_PER_DAY} stories today. Leave some mystery.")
+    sid = con.execute("INSERT INTO stories (user_id, kind, text, bg, emoji, image, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                      (me["id"], kind, text, bg, emoji, image, now_ms())).lastrowid
+    return {"id": sid}
+
+
+def h_stories(con, me, body, p, q):
+    purge_stories(con)
+    mid = me["id"]
+    ids = friend_ids(con, mid) | {mid}
+    marks = ",".join("?" * len(ids))
+    rows = con.execute(f"SELECT id, user_id, kind, text, bg, emoji, created_at FROM stories "
+                       f"WHERE user_id IN ({marks}) ORDER BY created_at", tuple(ids)).fetchall()
+    seen = {r["story_id"] for r in con.execute("SELECT story_id FROM story_views WHERE user_id = ?", (mid,))}
+    groups = {}
+    for r in rows:
+        if not story_visible(con, mid, r):
+            continue
+        g = groups.setdefault(r["user_id"], {"user": user_out(get_user(con, r["user_id"])), "stories": []})
+        item = {"id": r["id"], "kind": r["kind"], "text": r["text"], "bg": r["bg"], "emoji": r["emoji"],
+                "created_at": r["created_at"], "seen": r["id"] in seen or r["user_id"] == mid}
+        if r["user_id"] == mid:
+            item["views"] = con.execute("SELECT COUNT(*) AS n FROM story_views WHERE story_id = ?", (r["id"],)).fetchone()["n"]
+        g["stories"].append(item)
+    out = []
+    for uid, g in groups.items():
+        g["all_seen"] = all(x["seen"] for x in g["stories"])
+        g["latest"] = g["stories"][-1]["created_at"]
+        out.append(g)
+    # me first, then unseen, then newest
+    out.sort(key=lambda g: (g["user"]["id"] != mid, g["all_seen"], -g["latest"]))
+    return out
+
+
+def _story(con, me, sid):
+    purge_stories(con)
+    row = con.execute("SELECT * FROM stories WHERE id = ?", (sid,)).fetchone()
+    if not row or not story_visible(con, me["id"], row):
+        raise ApiError(404, "Story not found (they only live 24 hours)")
+    return row
+
+
+def h_story_image(con, me, body, p, q):
+    row = _story(con, me, p[0])
+    if row["image"] is None:
+        raise ApiError(404, "This story has no image")
+    return Raw(bytes(row["image"]), "image/jpeg")
+
+
+def h_view_story(con, me, body, p, q):
+    row = _story(con, me, p[0])
+    if row["user_id"] != me["id"]:
+        con.execute("INSERT OR IGNORE INTO story_views (story_id, user_id, viewed_at) VALUES (?, ?, ?)",
+                    (row["id"], me["id"], now_ms()))
+    return {"ok": True}
+
+
+def h_story_viewers(con, me, body, p, q):
+    row = _story(con, me, p[0])
+    if row["user_id"] != me["id"]:
+        raise ApiError(403, "Only the author can see who viewed a story")
+    return [user_basic(get_user(con, r["user_id"])) | {"viewed_at": r["viewed_at"]}
+            for r in con.execute("SELECT user_id, viewed_at FROM story_views WHERE story_id = ? ORDER BY viewed_at DESC",
+                                 (row["id"],))]
+
+
+def h_delete_story(con, me, body, p, q):
+    con.execute("DELETE FROM stories WHERE id = ? AND user_id = ?", (p[0], me["id"]))
+    return {"ok": True}
+
+
 def user_basic(row):
     """What non-friends may see: no stats, no photo."""
     return {"id": row["id"], "username": row["username"], "display_name": row["display_name"],
@@ -511,6 +653,12 @@ ROUTES = [
     ("POST", r"/nudge/(\d+)", h_nudge, True),
     ("GET", r"/leaderboard", h_leaderboard, True),
     ("GET", r"/users", h_directory, True),
+    ("GET", r"/stories", h_stories, True),
+    ("POST", r"/stories", h_post_story, True),
+    ("GET", r"/stories/(\d+)/image", h_story_image, True),
+    ("POST", r"/stories/(\d+)/view", h_view_story, True),
+    ("GET", r"/stories/(\d+)/viewers", h_story_viewers, True),
+    ("DELETE", r"/stories/(\d+)", h_delete_story, True),
     ("POST", r"/me/photo", h_set_photo, True),
     ("DELETE", r"/me/photo", h_delete_photo, True),
     ("GET", r"/users/(\d+)/photo", h_get_photo, True),
@@ -520,7 +668,7 @@ ROUTES = [(m, re.compile(f"^{pat}/?$"), h, a) for m, pat, h, a in ROUTES]
 
 def make_handler(store):
     class Handler(BaseHTTPRequestHandler):
-        server_version = "KakasSquad/2.1"
+        server_version = "KakasSquad/2.4"
 
         def log_message(self, fmt, *args):
             if os.environ.get("KAKAS_QUIET") != "1":
