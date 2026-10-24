@@ -329,7 +329,7 @@ fun SettingsScreen(vm: MainVm, prefs: Prefs, dash: Dash, onBack: () -> Unit) {
             item {
                 Column(Modifier.fillMaxWidth().padding(top = 12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                     Text("💩", fontSize = 40.sp)
-                    Text("Kakascalendar 2.2", style = MaterialTheme.typography.titleMedium)
+                    Text("Kakascalendar 2.4", style = MaterialTheme.typography.titleMedium)
                     Text("Stronger. Smarter. Better.", color = cs.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
                 }
             }
