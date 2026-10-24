@@ -62,6 +62,9 @@ fun Onboarding(onDone: (String, String) -> Unit) {
                 Text("Pick your avatar", style = MaterialTheme.typography.titleMedium)
                 Spacer(Modifier.height(8.dp))
                 AvatarPicker(avatar) { avatar = it }
+                Spacer(Modifier.height(8.dp))
+                Text("Prefer your own photo? Add one later in Settings.", style = MaterialTheme.typography.labelSmall,
+                    color = cs.onSurfaceVariant)
             }
             Spacer(Modifier.height(20.dp))
             GradientButton("Let's go 🚀", Modifier.fillMaxWidth()) { onDone(name, avatar) }

@@ -8,6 +8,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.material.icons.rounded.Share
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -30,7 +32,7 @@ import com.example.kakascalendar.ui.components.*
 fun TopBar(title: String, onBack: () -> Unit, actions: @Composable RowScope.() -> Unit = {}) {
     Row(Modifier.fillMaxWidth().statusBarsPadding().padding(horizontal = 8.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
         IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, "Back") }
-        Text(title, style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
+        Text(title, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.weight(1f))
         actions()
     }
 }
@@ -52,7 +54,9 @@ fun MeScreen(vm: MainVm, prefs: Prefs, dash: Dash, onBack: () -> Unit, onSetting
     }
 
     Column(Modifier.fillMaxSize()) {
+        val shareColors = listOf(cs.primary.toArgb(), cs.secondary.toArgb(), cs.tertiary.toArgb())
         TopBar("Profile", onBack) {
+            IconButton(onClick = { vm.shareBrag(shareColors) }) { Icon(Icons.Rounded.Share, "Share") }
             IconButton(onClick = onSettings) { Icon(Icons.Rounded.Settings, "Settings") }
         }
         LazyColumn(
@@ -62,7 +66,7 @@ fun MeScreen(vm: MainVm, prefs: Prefs, dash: Dash, onBack: () -> Unit, onSetting
             item {
                 Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
                     ProgressRing(dash.level.fraction, Modifier.size(128.dp), stroke = 8.dp) {
-                        Avatar(prefs.avatar, 100.dp)
+                        MyAvatar(prefs, 100.dp, onClick = onSettings)
                     }
                     Spacer(Modifier.height(10.dp))
                     Text(prefs.name.ifBlank { "Champion" }, style = MaterialTheme.typography.headlineMedium)

@@ -20,6 +20,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.kakascalendar.Dash
+import com.example.kakascalendar.data.HomeSection
+import com.example.kakascalendar.data.Prefs
+import androidx.compose.foundation.clickable
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Share
+import androidx.compose.ui.graphics.toArgb
 import com.example.kakascalendar.data.Entry
 import com.example.kakascalendar.domain.*
 import com.example.kakascalendar.ui.components.*
@@ -30,34 +36,40 @@ import java.util.Locale
 @Composable
 fun HomeScreen(
     dash: Dash,
+    prefs: Prefs,
     onEdit: (Entry) -> Unit,
     onDelete: (Entry) -> Unit,
     onQuickLog: () -> Unit,
     onTimer: () -> Unit,
-    onInsights: () -> Unit
+    onInsights: () -> Unit,
+    onWater: (Int) -> Unit,
+    onShare: (List<Int>) -> Unit
 ) {
     val grouped = remember(dash.entries) { dash.entries.take(40).groupBy { it.date() } }
     val today = LocalDate.now()
+    val cs = MaterialTheme.colorScheme
+    val shareColors = listOf(cs.primary.toArgb(), cs.secondary.toArgb(), cs.tertiary.toArgb())
 
     LazyColumn(
         contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 130.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        item { Hero(dash, today) }
-        item {
+        item { Hero(dash, today, onShare = { onShare(shareColors) }) }
+        if (prefs.shows(HomeSection.QUICK)) item {
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 QuickAction("🚽", "Throne timer", "Time your session", Modifier.weight(1f), onTimer)
                 QuickAction("⚡", "Quick log", "One-tap perfect 🍌", Modifier.weight(1f), onQuickLog)
             }
         }
-        item {
+        if (prefs.shows(HomeSection.WATER)) item { WaterCard(dash.waterToday, dash.waterGoal, onWater) }
+        if (prefs.shows(HomeSection.STATS)) item {
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 StatTile("Today", "${dash.todayCount}", Modifier.weight(1f), "☀️")
                 StatTile("This week", "${dash.weekCount}", Modifier.weight(1f), "📆")
                 StatTile("Total", "${dash.entries.size}", Modifier.weight(1f), "💩")
             }
         }
-        dash.insights.firstOrNull()?.let { ins ->
+        if (prefs.shows(HomeSection.INSIGHT)) dash.insights.firstOrNull()?.let { ins ->
             item { InsightCard(ins, onClick = onInsights, showMore = true) }
         }
         if (dash.loaded && dash.entries.isEmpty()) item {
@@ -71,13 +83,53 @@ fun HomeScreen(
 }
 
 @Composable
-private fun Hero(dash: Dash, today: LocalDate) {
+private fun WaterCard(glasses: Int, goal: Int, onChange: (Int) -> Unit) {
+    val cs = MaterialTheme.colorScheme
+    val water = Color(0xFF4F9DE8)
+    val done = glasses >= goal
+    GlassCard(padding = 14.dp) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                Modifier.size(42.dp).clip(RoundedCornerShape(14.dp)).background(water.copy(alpha = 0.18f)),
+                contentAlignment = Alignment.Center
+            ) { Text(if (done) "🌊" else "💧", fontSize = 22.sp) }
+            Spacer(Modifier.width(10.dp))
+            Column(Modifier.weight(1f)) {
+                Text("Hydration", fontWeight = FontWeight.Bold)
+                Text(
+                    if (done) "Goal reached. Your gut thanks you." else "$glasses of $goal glasses today",
+                    style = MaterialTheme.typography.bodySmall, color = cs.onSurfaceVariant
+                )
+            }
+            FilledTonalIconButton(onClick = { onChange(-1) }, enabled = glasses > 0, modifier = Modifier.size(38.dp)) {
+                Text("−", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+            }
+            Text("$glasses", fontSize = 22.sp, fontWeight = FontWeight.Black, modifier = Modifier.padding(horizontal = 10.dp))
+            FilledIconButton(
+                onClick = { onChange(1) }, modifier = Modifier.size(38.dp),
+                colors = IconButtonDefaults.filledIconButtonColors(containerColor = water, contentColor = Color.White)
+            ) { Text("+", fontSize = 20.sp, fontWeight = FontWeight.Bold) }
+        }
+        Spacer(Modifier.height(10.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.fillMaxWidth()) {
+            repeat(goal.coerceAtMost(16)) { i ->
+                Box(
+                    Modifier.weight(1f).height(8.dp).clip(RoundedCornerShape(50))
+                        .background(if (i < glasses) water else cs.onSurface.copy(alpha = 0.08f))
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun Hero(dash: Dash, today: LocalDate, onShare: () -> Unit) {
     val t = rememberInfiniteTransition(label = "hero")
     val drift by t.animateFloat(0f, 1f, infiniteRepeatable(tween(7000, easing = LinearEasing), RepeatMode.Reverse), label = "drift")
     val cs = MaterialTheme.colorScheme
     val shown by animateIntAsState(dash.streak, tween(1000, easing = FastOutSlowInEasing), label = "streak")
     val brush = Brush.linearGradient(
-        listOf(cs.primary, cs.secondary, cs.tertiary),
+        accentColorsForWhiteText(),
         start = Offset(0f, 600f * drift),
         end = Offset(1200f, 600f * (1f - drift))
     )
@@ -104,6 +156,7 @@ private fun Hero(dash: Dash, today: LocalDate) {
                     color = white.copy(alpha = 0.92f), style = MaterialTheme.typography.bodyMedium
                 )
             }
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
             ProgressRing(
                 fraction = if (dash.loggedToday) 1f else 0f,
                 modifier = Modifier.size(92.dp),
@@ -115,6 +168,17 @@ private fun Hero(dash: Dash, today: LocalDate) {
                     Text(if (dash.loggedToday) "✅" else "⏳", fontSize = 26.sp)
                     Text(if (dash.loggedToday) "Done" else "Today", color = white, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                 }
+            }
+            Spacer(Modifier.height(8.dp))
+            Row(
+                Modifier.clip(RoundedCornerShape(50)).background(white.copy(alpha = 0.22f)).clickable(onClick = onShare)
+                    .padding(horizontal = 12.dp, vertical = 6.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(Icons.Rounded.Share, "Share", tint = white, modifier = Modifier.size(16.dp))
+                Spacer(Modifier.width(4.dp))
+                Text("Brag", color = white, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+            }
             }
         }
         Spacer(Modifier.height(16.dp))

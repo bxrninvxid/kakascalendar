@@ -48,6 +48,24 @@ interface EntryDao {
     suspend fun clear()
 }
 
+@Entity(tableName = "water")
+data class WaterDay(
+    @PrimaryKey val date: String,   // ISO yyyy-MM-dd
+    val glasses: Int
+)
+
+@Dao
+interface WaterDao {
+    @Query("SELECT * FROM water")
+    fun all(): Flow<List<WaterDay>>
+
+    @Query("SELECT * FROM water WHERE date = :date")
+    suspend fun get(date: String): WaterDay?
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsert(day: WaterDay)
+}
+
 private val MIGRATION_1_2 = object : Migration(1, 2) {
     override fun migrate(db: SupportSQLiteDatabase) {
         db.execSQL("ALTER TABLE entries ADD COLUMN tags TEXT NOT NULL DEFAULT ''")
@@ -61,16 +79,23 @@ private val MIGRATION_2_3 = object : Migration(2, 3) {
     }
 }
 
-@Database(entities = [Entry::class], version = 3, exportSchema = false)
+private val MIGRATION_3_4 = object : Migration(3, 4) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("CREATE TABLE IF NOT EXISTS water (date TEXT NOT NULL PRIMARY KEY, glasses INTEGER NOT NULL)")
+    }
+}
+
+@Database(entities = [Entry::class, WaterDay::class], version = 4, exportSchema = false)
 abstract class AppDb : RoomDatabase() {
     abstract fun dao(): EntryDao
+    abstract fun water(): WaterDao
 
     companion object {
         @Volatile private var instance: AppDb? = null
 
         fun get(context: Context): AppDb = instance ?: synchronized(this) {
             instance ?: Room.databaseBuilder(context.applicationContext, AppDb::class.java, "kakascalendar.db")
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
                 .build().also { instance = it }
         }
     }

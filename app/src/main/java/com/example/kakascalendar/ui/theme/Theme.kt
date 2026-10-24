@@ -12,9 +12,12 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -32,9 +35,42 @@ enum class Accent(val label: String, val primary: Color, val secondary: Color, v
     }
 }
 
+/** Colors for the user-picked "Custom" accent. */
+data class AccentColors(val primary: Color, val secondary: Color, val tertiary: Color)
+
+fun Accent.colors() = AccentColors(primary, secondary, tertiary)
+
+fun customAccent(hue: Float): AccentColors {
+    val h = ((hue % 360f) + 360f) % 360f
+    return AccentColors(
+        primary = Color.hsv(h, 0.70f, 0.62f),
+        secondary = Color.hsv((h + 28f) % 360f, 0.58f, 0.88f),
+        tertiary = Color.hsv((h + 56f) % 360f, 0.50f, 0.96f)
+    )
+}
+
+fun accentColors(index: Int, hue: Float): AccentColors =
+    if (index == com.example.kakascalendar.data.CUSTOM_ACCENT) customAccent(hue) else Accent.of(index).colors()
+
+enum class AppFont(val label: String) {
+    DEFAULT("Default"), CONDENSED("Condensed"), SERIF("Classic"), MONO("Mono"), PLAYFUL("Playful");
+
+    fun family(): FontFamily = when (this) {
+        DEFAULT -> FontFamily.Default
+        CONDENSED -> FontFamily(android.graphics.Typeface.create("sans-serif-condensed", android.graphics.Typeface.NORMAL))
+        SERIF -> FontFamily.Serif
+        MONO -> FontFamily.Monospace
+        PLAYFUL -> FontFamily(android.graphics.Typeface.create("casual", android.graphics.Typeface.NORMAL))
+    }
+
+    companion object {
+        fun of(i: Int) = entries.getOrElse(i) { DEFAULT }
+    }
+}
+
 private fun mix(a: Color, b: Color, t: Float) = lerp(a, b, t)
 
-private fun schemeFor(a: Accent, dark: Boolean): ColorScheme {
+private fun schemeFor(a: AccentColors, dark: Boolean): ColorScheme {
     val white = Color.White
     val black = Color(0xFF0E0B0A)
     return if (!dark) {
@@ -87,23 +123,28 @@ private fun schemeFor(a: Accent, dark: Boolean): ColorScheme {
 }
 
 private val base = Typography()
-val AppTypography = Typography(
-    displayLarge = base.displayLarge.copy(fontWeight = FontWeight.Black, letterSpacing = (-1).sp),
-    displayMedium = base.displayMedium.copy(fontWeight = FontWeight.Black, letterSpacing = (-1).sp),
-    displaySmall = base.displaySmall.copy(fontWeight = FontWeight.ExtraBold, letterSpacing = (-0.5).sp),
-    headlineLarge = base.headlineLarge.copy(fontWeight = FontWeight.ExtraBold, letterSpacing = (-0.5).sp),
-    headlineMedium = base.headlineMedium.copy(fontWeight = FontWeight.ExtraBold, letterSpacing = (-0.4).sp),
-    headlineSmall = base.headlineSmall.copy(fontWeight = FontWeight.Bold, letterSpacing = (-0.3).sp),
-    titleLarge = base.titleLarge.copy(fontWeight = FontWeight.ExtraBold, letterSpacing = (-0.3).sp),
-    titleMedium = base.titleMedium.copy(fontWeight = FontWeight.Bold),
-    titleSmall = base.titleSmall.copy(fontWeight = FontWeight.Bold),
-    labelLarge = base.labelLarge.copy(fontWeight = FontWeight.SemiBold),
-    labelMedium = base.labelMedium.copy(fontWeight = FontWeight.SemiBold),
-    labelSmall = base.labelSmall.copy(fontWeight = FontWeight.Medium),
-    bodyLarge = base.bodyLarge,
-    bodyMedium = base.bodyMedium,
-    bodySmall = base.bodySmall
-)
+
+fun appTypography(family: FontFamily): Typography {
+    fun TextStyle.f(weight: FontWeight? = null, spacing: Float? = null) =
+        copy(fontFamily = family, fontWeight = weight ?: fontWeight, letterSpacing = spacing?.sp ?: letterSpacing)
+    return Typography(
+        displayLarge = base.displayLarge.f(FontWeight.Black, -1f),
+        displayMedium = base.displayMedium.f(FontWeight.Black, -1f),
+        displaySmall = base.displaySmall.f(FontWeight.ExtraBold, -0.5f),
+        headlineLarge = base.headlineLarge.f(FontWeight.ExtraBold, -0.5f),
+        headlineMedium = base.headlineMedium.f(FontWeight.ExtraBold, -0.4f),
+        headlineSmall = base.headlineSmall.f(FontWeight.Bold, -0.3f),
+        titleLarge = base.titleLarge.f(FontWeight.ExtraBold, -0.3f),
+        titleMedium = base.titleMedium.f(FontWeight.Bold),
+        titleSmall = base.titleSmall.f(FontWeight.Bold),
+        labelLarge = base.labelLarge.f(FontWeight.SemiBold),
+        labelMedium = base.labelMedium.f(FontWeight.SemiBold),
+        labelSmall = base.labelSmall.f(FontWeight.Medium),
+        bodyLarge = base.bodyLarge.f(),
+        bodyMedium = base.bodyMedium.f(),
+        bodySmall = base.bodySmall.f()
+    )
+}
 
 val AppShapes = Shapes(
     extraSmall = RoundedCornerShape(10.dp),
@@ -121,11 +162,15 @@ fun isAppDark(mode: Int): Boolean = when (mode) {
 }
 
 @Composable
-fun KakaTheme(mode: Int, accent: Int, dynamic: Boolean, content: @Composable () -> Unit) {
+fun KakaTheme(
+    mode: Int, accent: Int, dynamic: Boolean, hue: Float = 28f, font: Int = 0,
+    content: @Composable () -> Unit
+) {
     val dark = isAppDark(mode)
     val ctx = LocalContext.current
     val scheme = if (dynamic && Build.VERSION.SDK_INT >= 31) {
         if (dark) dynamicDarkColorScheme(ctx) else dynamicLightColorScheme(ctx)
-    } else schemeFor(Accent.of(accent), dark)
-    MaterialTheme(colorScheme = scheme, typography = AppTypography, shapes = AppShapes, content = content)
+    } else schemeFor(accentColors(accent, hue), dark)
+    val typography = remember(font) { appTypography(AppFont.of(font).family()) }
+    MaterialTheme(colorScheme = scheme, typography = typography, shapes = AppShapes, content = content)
 }

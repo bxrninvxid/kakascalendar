@@ -34,9 +34,17 @@ val TAGS = listOf(
     "😌 Easy", "😣 Strained", "⚡ Urgent", "📖 Long sit", "📱 Phone",
     "🌶️ Spicy", COFFEE, "🍺 Night out", "💊 Meds", "✈️ Travel"
 )
+fun allTags(custom: List<String>): List<String> = TAGS + custom.filter { it !in TAGS }
+
+fun timeFormatter(use24h: Boolean): DateTimeFormatter =
+    DateTimeFormatter.ofPattern(if (use24h) "HH:mm" else "h:mm a")
+
 val RATINGS = listOf("😖", "😕", "😐", "🙂", "🤩")
 val RATING_LABELS = listOf("Rough", "Meh", "Okay", "Good", "Legendary")
-val AVATARS = listOf("💩", "🦸", "🦊", "🐻", "🐼", "🐸", "🦄", "🐙", "👑", "🤖", "👽", "🦁", "🐯", "🐧", "🦖", "🐵")
+val AVATARS = listOf(
+    "💩", "🦸", "🦊", "🐻", "🐼", "🐸", "🦄", "🐙", "👑", "🤖", "👽", "🦁", "🐯", "🐧", "🦖", "🐵",
+    "😎", "🥷", "🧙", "🧛", "🤠", "👻", "💀", "🎃", "🐲", "🦅", "🐺", "🦈", "🍌", "🔥", "⚡", "🚽"
+)
 val REACTIONS = listOf("💩", "🔥", "👑", "😂", "👏")
 
 // ───────── Entry helpers ─────────

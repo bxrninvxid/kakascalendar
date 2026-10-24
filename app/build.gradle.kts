@@ -14,8 +14,8 @@ android {
         applicationId = "com.example.kakascalendar"
         minSdk = 26
         targetSdk = 34
-        versionCode = 2
-        versionName = "2.0"
+        versionCode = 3
+        versionName = "2.1"
     }
     buildTypes {
         release {
@@ -51,6 +51,10 @@ dependencies {
     implementation("androidx.room:room-ktx:$room")
     ksp("androidx.room:room-compiler:$room")
     implementation("androidx.datastore:datastore-preferences:1.1.1")
+
+    // Images (photo avatars)
+    implementation("io.coil-kt:coil-compose:2.7.0")
+    implementation("androidx.exifinterface:exifinterface:1.3.7")
 
     // System integrations
     implementation("androidx.work:work-runtime-ktx:2.9.1")

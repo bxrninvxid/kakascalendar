@@ -11,6 +11,8 @@ Pure Python standard library. No pip install, no framework, no excuses.
     PORT=9000 KAKAS_DB=/data/k.db python3 server.py
 """
 
+import base64
+import binascii
 import hashlib
 import hmac
 import json
@@ -29,7 +31,8 @@ EVENT_KINDS = {"log", "achievement", "level"}
 REACTIONS = {"💩", "🔥", "👑", "😂", "👏"}
 SHARE_LEVELS = {"full", "stats", "private"}
 NUDGE_COOLDOWN_MS = 60 * 60 * 1000  # one nudge per friend per hour
-MAX_BODY = 16 * 1024
+MAX_BODY = 512 * 1024
+MAX_PHOTO = 300 * 1024  # decoded JPEG bytes
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS users (
@@ -46,7 +49,9 @@ CREATE TABLE IF NOT EXISTS users (
     total INTEGER NOT NULL DEFAULT 0,
     week_count INTEGER NOT NULL DEFAULT 0,
     xp INTEGER NOT NULL DEFAULT 0,
-    level INTEGER NOT NULL DEFAULT 1
+    level INTEGER NOT NULL DEFAULT 1,
+    photo BLOB,
+    photo_version INTEGER NOT NULL DEFAULT 0
 );
 CREATE TABLE IF NOT EXISTS tokens (
     token TEXT PRIMARY KEY,
@@ -79,6 +84,14 @@ CREATE TABLE IF NOT EXISTS reactions (
 """
 
 
+class Raw:
+    """A non-JSON response (e.g. an image)."""
+
+    def __init__(self, data, content_type):
+        self.data = data
+        self.content_type = content_type
+
+
 class ApiError(Exception):
     def __init__(self, status, detail):
         super().__init__(detail)
@@ -102,6 +115,10 @@ class Store:
         self.lock = threading.Lock()
         con = self._con()
         con.executescript(SCHEMA)
+        cols = {r["name"] for r in con.execute("PRAGMA table_info(users)")}
+        if "photo" not in cols:  # upgrade databases created by 2.0
+            con.execute("ALTER TABLE users ADD COLUMN photo BLOB")
+            con.execute("ALTER TABLE users ADD COLUMN photo_version INTEGER NOT NULL DEFAULT 0")
         con.commit()
         con.close()
 
@@ -130,7 +147,7 @@ class Store:
 def user_out(row):
     return {k: row[k] for k in (
         "id", "username", "display_name", "avatar", "share_level", "current_streak",
-        "best_streak", "total", "week_count", "xp", "level")}
+        "best_streak", "total", "week_count", "xp", "level", "photo_version")}
 
 
 def get_user(con, uid):
@@ -380,6 +397,37 @@ def h_nudge(con, me, body, p, q):
     return {"ok": True}
 
 
+def h_set_photo(con, me, body, p, q):
+    data = body.get("data")
+    if not isinstance(data, str) or not data:
+        raise ApiError(400, "'data' must be a base64 JPEG")
+    try:
+        raw = base64.b64decode(data, validate=True)
+    except (binascii.Error, ValueError):
+        raise ApiError(400, "'data' is not valid base64")
+    if len(raw) > MAX_PHOTO:
+        raise ApiError(413, "Photo too large (max 300 KB)")
+    if not raw.startswith(b"\xff\xd8"):
+        raise ApiError(400, "Photo must be a JPEG")
+    con.execute("UPDATE users SET photo = ?, photo_version = photo_version + 1 WHERE id = ?", (raw, me["id"]))
+    return user_out(get_user(con, me["id"]))
+
+
+def h_delete_photo(con, me, body, p, q):
+    con.execute("UPDATE users SET photo = NULL, photo_version = 0 WHERE id = ?", (me["id"],))
+    return user_out(get_user(con, me["id"]))
+
+
+def h_get_photo(con, me, body, p, q):
+    uid = p[0]
+    if uid != me["id"] and uid not in friend_ids(con, me["id"]):
+        raise ApiError(404, "Photo not found")
+    row = con.execute("SELECT photo FROM users WHERE id = ?", (uid,)).fetchone()
+    if not row or row["photo"] is None:
+        raise ApiError(404, "Photo not found")
+    return Raw(bytes(row["photo"]), "image/jpeg")
+
+
 def h_leaderboard(con, me, body, p, q):
     out = []
     for uid in friend_ids(con, me["id"]) | {me["id"]}:
@@ -409,19 +457,30 @@ ROUTES = [
     ("DELETE", r"/friends/(\d+)", h_unfriend, True),
     ("POST", r"/nudge/(\d+)", h_nudge, True),
     ("GET", r"/leaderboard", h_leaderboard, True),
+    ("POST", r"/me/photo", h_set_photo, True),
+    ("DELETE", r"/me/photo", h_delete_photo, True),
+    ("GET", r"/users/(\d+)/photo", h_get_photo, True),
 ]
 ROUTES = [(m, re.compile(f"^{pat}/?$"), h, a) for m, pat, h, a in ROUTES]
 
 
 def make_handler(store):
     class Handler(BaseHTTPRequestHandler):
-        server_version = "KakasSquad/2.0"
+        server_version = "KakasSquad/2.1"
 
         def log_message(self, fmt, *args):
             if os.environ.get("KAKAS_QUIET") != "1":
                 sys.stderr.write("%s %s\n" % (self.address_string(), fmt % args))
 
         def _send(self, status, data):
+            if isinstance(data, Raw):
+                self.send_response(status)
+                self.send_header("Content-Type", data.content_type)
+                self.send_header("Content-Length", str(len(data.data)))
+                self.send_header("Cache-Control", "private, max-age=31536000")
+                self.end_headers()
+                self.wfile.write(data.data)
+                return
             raw = json.dumps(data, ensure_ascii=False).encode()
             self.send_response(status)
             self.send_header("Content-Type", "application/json; charset=utf-8")

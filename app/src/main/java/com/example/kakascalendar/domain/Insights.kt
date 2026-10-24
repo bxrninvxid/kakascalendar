@@ -23,7 +23,7 @@ private fun hourLabel(h: Int): String = when {
  * Rule-based "smart" insights. Friendly nudges, not medical advice.
  * Ordered roughly by importance.
  */
-fun insights(all: List<Entry>, today: LocalDate = LocalDate.now()): List<Insight> {
+fun insights(all: List<Entry>, today: LocalDate = LocalDate.now(), water: Map<LocalDate, Int> = emptyMap(), waterGoal: Int = 8): List<Insight> {
     if (all.size < 5) {
         return listOf(
             Insight("🧠", "Insights are warming up", "Log ${5 - all.size} more to unlock personal patterns and predictions.")
@@ -51,6 +51,19 @@ fun insights(all: List<Entry>, today: LocalDate = LocalDate.now()): List<Insight
                 "$loose% were Type 6–7. If it lasts more than a few days or comes with pain or fever, check with a doctor.", Tone.WARN)
             ideal >= 70 -> out += Insight("🏆", "Textbook consistency",
                 "$ideal% of recent entries landed in the healthy Type 3–5 zone. Elite stuff.", Tone.GOOD)
+        }
+    }
+
+    // Hydration
+    val lastWeekWater = (0L..6L).map { water[today.minusDays(it)] ?: 0 }
+    if (water.isNotEmpty() && lastWeekWater.any { it > 0 }) {
+        val avgWater = lastWeekWater.average()
+        val hardRecent = recent.count { it.type <= 2 }
+        when {
+            avgWater < waterGoal * 0.6 && hardRecent >= 2 -> out += Insight("🚰", "Drink up, legend",
+                "You're averaging ${"%.1f".format(avgWater)} glasses a day and had $hardRecent hard ones lately. Water is the cheapest fix.", Tone.WARN)
+            avgWater >= waterGoal -> out += Insight("💧", "Hydration hero",
+                "${"%.1f".format(avgWater)} glasses a day this week. Your gut sends its regards.", Tone.GOOD)
         }
     }
 

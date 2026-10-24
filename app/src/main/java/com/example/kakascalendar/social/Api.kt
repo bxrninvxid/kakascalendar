@@ -39,7 +39,8 @@ data class UserDto(
     val total: Int = 0,
     @SerialName("week_count") val weekCount: Int = 0,
     val xp: Int = 0,
-    val level: Int = 1
+    val level: Int = 1,
+    @SerialName("photo_version") val photoVersion: Int = 0
 )
 
 @Serializable
@@ -101,6 +102,9 @@ data class UsernameReq(val username: String)
 data class ReactReq(val emoji: String)
 
 @Serializable
+data class PhotoReq(val data: String)
+
+@Serializable
 data class StatusRes(val status: String = "", val active: Boolean = false, val ok: Boolean = false)
 
 // ───────── Client ─────────
@@ -154,6 +158,10 @@ class Api(base: String, private val token: String?) {
     suspend fun decline(requestId: Long) { client.post("$base/friends/requests/$requestId/decline") { auth() } }
     suspend fun unfriend(userId: Long) { client.delete("$base/friends/$userId") { auth() } }
     suspend fun nudge(userId: Long) { client.post("$base/nudge/$userId") { auth() } }
+
+    suspend fun uploadPhoto(base64Jpeg: String): UserDto =
+        client.post("$base/me/photo") { auth(); jsonBody(PhotoReq(base64Jpeg)) }.body()
+    suspend fun deletePhoto(): UserDto = client.delete("$base/me/photo") { auth() }.body()
 
     suspend fun leaderboard(): List<UserDto> = client.get("$base/leaderboard") { auth() }.body()
 }

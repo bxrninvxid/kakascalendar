@@ -30,7 +30,14 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.text.font.FontWeight
@@ -41,37 +48,68 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.kakascalendar.data.Entry
+import com.example.kakascalendar.data.Prefs
 import com.example.kakascalendar.domain.*
 import java.time.LocalDate
 import kotlin.random.Random
 
+// ───────────────────────── Ui settings ─────────────────────────
+
+/** Look-and-feel options that many composables need. */
+data class UiSettings(
+    val cardStyle: Int = 0,          // 0 glass, 1 solid, 2 outline
+    val animatedBg: Boolean = true,
+    val haptics: Boolean = true,
+    val use24h: Boolean = false,
+    val weekStartsSunday: Boolean = false
+)
+
+val LocalUi = staticCompositionLocalOf { UiSettings() }
+
+/** Server + token, so avatars of Squad members can be loaded. */
+data class PhotoAuth(val server: String = "", val token: String? = null)
+
+val LocalPhotoAuth = staticCompositionLocalOf { PhotoAuth() }
+
+/** Background choices for emoji avatars (index 0 = theme color). */
+val AVATAR_BGS: List<Color?> = listOf(
+    null, Color(0xFFFFD8A8), Color(0xFFFFB4A2), Color(0xFFF7A1C4), Color(0xFFCDB4FF),
+    Color(0xFFA0C4FF), Color(0xFF9BF6FF), Color(0xFFB9FBC0), Color(0xFFFDFFB6), Color(0xFF2B2D42)
+)
+
+fun avatarBg(i: Int): Color? = AVATAR_BGS.getOrNull(i)
+
 // ───────────────────────── Surfaces ─────────────────────────
 
-/** Slowly drifting colour blobs behind everything. */
+/** Slowly drifting colour blobs behind everything. Also sets readable text colors. */
 @Composable
 fun AppBackground(modifier: Modifier = Modifier, content: @Composable BoxScope.() -> Unit) {
     val cs = MaterialTheme.colorScheme
+    val animated = LocalUi.current.animatedBg
     val t = rememberInfiniteTransition(label = "bg")
-    val shift by t.animateFloat(
+    val anim by t.animateFloat(
         0f, 1f, infiniteRepeatable(tween(16_000, easing = LinearEasing), RepeatMode.Reverse), label = "shift"
     )
-    Box(
-        modifier
-            .fillMaxSize()
-            .background(cs.background)
-            .drawBehind {
-                val w = size.width
-                val h = size.height
-                fun blob(c: Color, a: Float, x: Float, y: Float, r: Float) {
-                    val center = Offset(x, y)
-                    drawCircle(Brush.radialGradient(listOf(c.copy(alpha = a), Color.Transparent), center, r), r, center)
-                }
-                blob(cs.primary, 0.20f, w * (0.05f + 0.35f * shift), h * 0.06f, w * 0.95f)
-                blob(cs.secondary, 0.16f, w * (1f - 0.3f * shift), h * 0.42f, w * 0.8f)
-                blob(cs.tertiary, 0.12f, w * (0.2f + 0.2f * shift), h * 0.92f, w * 0.9f)
-            },
-        content = content
-    )
+    val shift = if (animated) anim else 0.35f
+    CompositionLocalProvider(LocalContentColor provides cs.onBackground) {
+        Box(
+            modifier
+                .fillMaxSize()
+                .background(cs.background)
+                .drawBehind {
+                    val w = size.width
+                    val h = size.height
+                    fun blob(c: Color, a: Float, x: Float, y: Float, r: Float) {
+                        val center = Offset(x, y)
+                        drawCircle(Brush.radialGradient(listOf(c.copy(alpha = a), Color.Transparent), center, r), r, center)
+                    }
+                    blob(cs.primary, 0.22f, w * (0.05f + 0.35f * shift), h * 0.05f, w * 0.95f)
+                    blob(cs.secondary, 0.16f, w * (1f - 0.3f * shift), h * 0.42f, w * 0.8f)
+                    blob(cs.tertiary, 0.12f, w * (0.2f + 0.2f * shift), h * 0.92f, w * 0.9f)
+                },
+            content = content
+        )
+    }
 }
 
 @Composable
@@ -83,36 +121,71 @@ fun GlassCard(
     content: @Composable ColumnScope.() -> Unit
 ) {
     val cs = MaterialTheme.colorScheme
+    val style = LocalUi.current.cardStyle
     val shape = RoundedCornerShape(26.dp)
-    Column(
-        modifier
-            .clip(shape)
-            .background(tint ?: cs.surfaceContainerLow.copy(alpha = 0.78f))
-            .border(1.dp, cs.onSurface.copy(alpha = 0.07f), shape)
-            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
-            .padding(padding),
-        content = content
-    )
+    val bg: Brush = when {
+        tint != null -> SolidColor(tint)
+        style == 1 -> SolidColor(cs.surfaceContainerHigh)
+        style == 2 -> SolidColor(Color.Transparent)
+        else -> Brush.verticalGradient(
+            listOf(cs.surfaceContainerHigh.copy(alpha = 0.82f), cs.surfaceContainerLow.copy(alpha = 0.70f))
+        )
+    }
+    val border: Brush = when (style) {
+        2 -> SolidColor(cs.outline.copy(alpha = 0.55f))
+        1 -> SolidColor(Color.Transparent)
+        else -> Brush.verticalGradient(listOf(cs.onSurface.copy(alpha = 0.14f), cs.onSurface.copy(alpha = 0.03f)))
+    }
+    CompositionLocalProvider(LocalContentColor provides cs.onSurface) {
+        Column(
+            modifier
+                .clip(shape)
+                .background(bg)
+                .border(if (style == 2) 1.5.dp else 1.dp, border, shape)
+                .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
+                .padding(padding),
+            content = content
+        )
+    }
+}
+
+/** Accent gradient colors that keep white text readable (deepened in dark mode). */
+@Composable
+fun accentColorsForWhiteText(): List<Color> {
+    val cs = MaterialTheme.colorScheme
+    val dark = cs.background.luminance() < 0.5f
+    val base = listOf(cs.primary, cs.secondary, cs.tertiary)
+    return if (dark) base.map { lerp(it, Color.Black, 0.38f) } else base
 }
 
 @Composable
-fun accentBrush(): Brush {
-    val cs = MaterialTheme.colorScheme
-    return Brush.linearGradient(listOf(cs.primary, cs.secondary, cs.tertiary))
-}
+fun accentBrush(): Brush = Brush.linearGradient(accentColorsForWhiteText())
 
 @Composable
 fun SectionTitle(text: String, modifier: Modifier = Modifier, action: String? = null, onAction: (() -> Unit)? = null) {
     Row(modifier.fillMaxWidth().padding(start = 4.dp, top = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-        Text(text, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+        Box(Modifier.size(width = 4.dp, height = 18.dp).clip(RoundedCornerShape(50)).background(accentBrush()))
+        Spacer(Modifier.width(8.dp))
+        Text(text, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.weight(1f))
         if (action != null && onAction != null) {
             TextButton(onClick = onAction) { Text(action) }
         }
     }
 }
 
+/**
+ * Circle avatar. Shows [photo] (a File, URL or Coil ImageRequest) when given,
+ * with the emoji underneath as a fallback while loading or if it fails.
+ */
 @Composable
-fun Avatar(emoji: String, size: Dp = 44.dp, ring: Boolean = false, onClick: (() -> Unit)? = null) {
+fun Avatar(
+    emoji: String,
+    size: Dp = 44.dp,
+    ring: Boolean = false,
+    photo: Any? = null,
+    bg: Color? = null,
+    onClick: (() -> Unit)? = null
+) {
     val cs = MaterialTheme.colorScheme
     val brush = accentBrush()
     Box(
@@ -120,11 +193,41 @@ fun Avatar(emoji: String, size: Dp = 44.dp, ring: Boolean = false, onClick: (() 
             .size(size)
             .then(if (ring) Modifier.border(2.5.dp, brush, CircleShape).padding(4.dp) else Modifier)
             .clip(CircleShape)
-            .background(cs.primaryContainer)
+            .background(bg ?: cs.primaryContainer)
             .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier),
         contentAlignment = Alignment.Center
     ) {
-        Text(emoji, fontSize = (size.value * if (ring) 0.42f else 0.5f).sp)
+        Text(emoji, fontSize = (size.value * if (ring) 0.42f else 0.5f).sp, color = cs.onPrimaryContainer)
+        if (photo != null) {
+            AsyncImage(
+                model = photo,
+                contentDescription = "Avatar",
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.matchParentSize().clip(CircleShape)
+            )
+        }
+    }
+}
+
+/** The user's own avatar (photo if set, else emoji on their chosen background). */
+@Composable
+fun MyAvatar(prefs: Prefs, size: Dp = 44.dp, ring: Boolean = false, onClick: (() -> Unit)? = null) {
+    val photo = remember(prefs.avatarPhoto) { prefs.avatarPhoto?.let { java.io.File(it) } }
+    Avatar(prefs.avatar, size, ring, photo = photo, bg = avatarBg(prefs.avatarBg), onClick = onClick)
+}
+
+/** Coil request for a Squad member's photo (null if they have none). */
+@Composable
+fun rememberUserPhoto(userId: Long, photoVersion: Int): Any? {
+    if (photoVersion <= 0) return null
+    val auth = LocalPhotoAuth.current
+    val ctx = LocalContext.current
+    return remember(userId, photoVersion, auth) {
+        val req = ImageRequest.Builder(ctx)
+            .data("${auth.server.trimEnd('/')}/users/$userId/photo?v=$photoVersion")
+            .crossfade(true)
+        auth.token?.let { req.addHeader("Authorization", "Bearer $it") }
+        req.build()
     }
 }
 
@@ -211,8 +314,9 @@ fun EntryCard(e: Entry, onClick: (Entry) -> Unit, onDelete: (Entry) -> Unit) {
                     Text("Type ${t.n} · ${t.label}", fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f, fill = false))
                     if (e.rating > 0) Text("  ${RATINGS[e.rating - 1]}", fontSize = 15.sp)
                 }
+                val fmt = timeFormatter(LocalUi.current.use24h)
                 val meta = buildString {
-                    append(e.dateTime().format(java.time.format.DateTimeFormatter.ofPattern("h:mm a")))
+                    append(e.dateTime().format(fmt))
                     if (e.durationSec > 0) append(" · ⏱ ${formatDuration(e.durationSec)}")
                 }
                 Text(meta, style = MaterialTheme.typography.bodySmall, color = cs.onSurfaceVariant)

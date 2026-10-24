@@ -72,8 +72,10 @@ fun CalendarScreen(dash: Dash, onEdit: (Entry) -> Unit, onDelete: (Entry) -> Uni
                     }
                 }
                 Spacer(Modifier.height(10.dp))
+                val sundayFirst = LocalUi.current.weekStartsSunday
+                val weekOrder = if (sundayFirst) listOf(DayOfWeek.SUNDAY) + DayOfWeek.values().take(6) else DayOfWeek.values().toList()
                 Row {
-                    DayOfWeek.values().forEach {
+                    weekOrder.forEach {
                         Text(
                             it.getDisplayName(JTextStyle.NARROW, Locale.getDefault()), Modifier.weight(1f),
                             textAlign = TextAlign.Center, color = cs.onSurfaceVariant, style = MaterialTheme.typography.labelMedium
@@ -90,7 +92,7 @@ fun CalendarScreen(dash: Dash, onEdit: (Entry) -> Unit, onDelete: (Entry) -> Uni
                     },
                     label = "month"
                 ) { m ->
-                    MonthGrid(m, byDay, dash.streakDays, selected) { selected = it }
+                    MonthGrid(m, byDay, dash.streakDays, selected, sundayFirst) { selected = it }
                 }
                 Spacer(Modifier.height(10.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -118,9 +120,11 @@ private fun MonthGrid(
     byDay: Map<LocalDate, List<Entry>>,
     streak: Set<LocalDate>,
     selected: LocalDate,
+    sundayFirst: Boolean,
     onSelect: (LocalDate) -> Unit
 ) {
-    val offset = month.atDay(1).dayOfWeek.value - 1  // Monday first
+    val dow = month.atDay(1).dayOfWeek.value          // 1 = Monday … 7 = Sunday
+    val offset = if (sundayFirst) dow % 7 else dow - 1
     val len = month.lengthOfMonth()
     val rows = (offset + len + 6) / 7
     Column {

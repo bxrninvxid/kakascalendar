@@ -119,5 +119,36 @@ class SquadServerTest(unittest.TestCase):
         self.assertNotIn(b["id"], [u["id"] for u in self.call("GET", "/friends", tok=ta)[1]["friends"]])
 
 
+    def test_photos(self):
+        import base64
+        ta, a = self.reg("photo_a")
+        tb, b = self.reg("photo_b")
+        tc, c = self.reg("photo_c")
+        self.befriend(ta, tb, "photo_b")
+        jpeg = b"\xff\xd8\xff\xe0" + b"x" * 200
+        st, me = self.call("POST", "/me/photo", {"data": base64.b64encode(jpeg).decode()}, ta)
+        self.assertEqual(st, 200)
+        self.assertEqual(me["photo_version"], 1)
+        self.assertEqual(self.call("POST", "/me/photo", {"data": base64.b64encode(b"GIF89a").decode()}, ta)[0], 400)
+        self.assertEqual(self.call("POST", "/me/photo", {"data": "%%%"}, ta)[0], 400)
+
+        def get(path, tok):
+            req = urllib.request.Request(self.base + path)
+            req.add_header("Authorization", "Bearer " + tok)
+            try:
+                with urllib.request.urlopen(req) as r:
+                    return r.status, r.headers["Content-Type"], r.read()
+            except urllib.error.HTTPError as e:
+                return e.code, None, None
+
+        self.assertEqual(get(f"/users/{a['id']}/photo", tb), (200, "image/jpeg", jpeg))   # friend
+        self.assertEqual(get(f"/users/{a['id']}/photo", ta)[0], 200)                      # self
+        self.assertEqual(get(f"/users/{a['id']}/photo", tc)[0], 404)                      # stranger
+        friends = self.call("GET", "/friends", tok=tb)[1]["friends"]
+        self.assertEqual(friends[0]["photo_version"], 1)
+        self.assertEqual(self.call("DELETE", "/me/photo", tok=ta)[1]["photo_version"], 0)
+        self.assertEqual(get(f"/users/{a['id']}/photo", tb)[0], 404)
+
+
 if __name__ == "__main__":
     unittest.main()

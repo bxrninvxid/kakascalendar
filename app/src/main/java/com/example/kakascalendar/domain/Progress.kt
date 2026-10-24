@@ -19,7 +19,7 @@ data class Achievement(
 
 enum class Tier(val label: String) { BRONZE("Bronze"), SILVER("Silver"), GOLD("Gold"), LEGEND("Legendary") }
 
-fun achievements(e: List<Entry>, friends: Int = 0): List<Achievement> {
+fun achievements(e: List<Entry>, friends: Int = 0, waterGoalDays: Int = 0): List<Achievement> {
     val days = daysOf(e)
     val best = longestStreak(days)
     val kinds = e.map { it.type }.toSet().size
@@ -52,6 +52,8 @@ fun achievements(e: List<Entry>, friends: Int = 0): List<Achievement> {
             if (e.any { it.durationSec >= 15 * 60 }) 1 else 0, 1, 50, B),
         Achievement("triple", "🎯", "Hat Trick", "3 entries in a single day", maxPerDay, 3, 75, S),
         Achievement("weekend", "🏖️", "Weekend Warrior", "Log on 8 weekend days", weekendDays, 8, 100, S),
+        Achievement("hydro3", "💧", "Hydrated", "Hit your water goal on 3 days", waterGoalDays, 3, 50, Tier.BRONZE),
+        Achievement("hydro14", "🌊", "Hydro Homie", "Hit your water goal on 14 days", waterGoalDays, 14, 200, Tier.GOLD),
         Achievement("squad1", "🤝", "Squad Up", "Add your first friend", friends, 1, 75, B),
         Achievement("squad5", "📣", "Influencer", "Have 5 friends in your squad", friends, 5, 200, G)
     )

@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
+import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
@@ -21,13 +22,36 @@ private val Context.dataStore by preferencesDataStore("settings")
 /** Default server: 10.0.2.2 is "your computer" as seen from the Android emulator. */
 const val DEFAULT_SERVER = "http://10.0.2.2:8000"
 
+/** Index of the "Custom" accent (uses [Prefs.customHue]). */
+const val CUSTOM_ACCENT = 6
+
+/** Home sections that can be hidden. */
+object HomeSection {
+    const val QUICK = "quick"
+    const val STATS = "stats"
+    const val WATER = "water"
+    const val INSIGHT = "insight"
+}
+
 data class Prefs(
     val onboarded: Boolean = false,
     val name: String = "",
     val avatar: String = "💩",
+    val avatarPhoto: String? = null,     // absolute path to the local photo, null = use emoji
+    val avatarBg: Int = 0,               // index into AVATAR_BGS, 0 = theme color
     val themeMode: Int = 0,              // 0 system, 1 light, 2 dark
     val accent: Int = 0,
+    val customHue: Float = 28f,
     val dynamicColor: Boolean = false,
+    val font: Int = 0,                   // index into AppFont
+    val cardStyle: Int = 0,              // 0 glass, 1 solid, 2 outline
+    val animatedBg: Boolean = true,
+    val haptics: Boolean = true,
+    val use24h: Boolean = false,
+    val weekStartsSunday: Boolean = false,
+    val hiddenSections: Set<String> = emptySet(),
+    val customTags: List<String> = emptyList(),
+    val waterGoal: Int = 8,
     val reminder: Boolean = false,
     val reminderHour: Int = 20,
     val reminderMinute: Int = 0,
@@ -43,6 +67,7 @@ data class Prefs(
     val friendsCount: Int = 0
 ) {
     val signedIn get() = token != null
+    fun shows(section: String) = section !in hiddenSections
 }
 
 class PrefsRepo(private val ctx: Context) {
@@ -50,9 +75,21 @@ class PrefsRepo(private val ctx: Context) {
         val onboarded = booleanPreferencesKey("onboarded")
         val name = stringPreferencesKey("name")
         val avatar = stringPreferencesKey("avatar")
+        val avatarPhoto = stringPreferencesKey("avatar_photo")
+        val avatarBg = intPreferencesKey("avatar_bg")
         val themeMode = intPreferencesKey("theme_mode")
         val accent = intPreferencesKey("accent")
+        val customHue = floatPreferencesKey("custom_hue")
         val dynamic = booleanPreferencesKey("dynamic_color")
+        val font = intPreferencesKey("font")
+        val cardStyle = intPreferencesKey("card_style")
+        val animatedBg = booleanPreferencesKey("animated_bg")
+        val haptics = booleanPreferencesKey("haptics")
+        val use24h = booleanPreferencesKey("use_24h")
+        val weekSunday = booleanPreferencesKey("week_sunday")
+        val hidden = stringSetPreferencesKey("hidden_sections")
+        val customTags = stringPreferencesKey("custom_tags")
+        val waterGoal = intPreferencesKey("water_goal")
         val reminder = booleanPreferencesKey("reminder")
         val reminderHour = intPreferencesKey("reminder_hour")
         val reminderMinute = intPreferencesKey("reminder_minute")
@@ -75,9 +112,21 @@ class PrefsRepo(private val ctx: Context) {
                 onboarded = p[K.onboarded] ?: false,
                 name = p[K.name] ?: "",
                 avatar = p[K.avatar] ?: "💩",
+                avatarPhoto = p[K.avatarPhoto],
+                avatarBg = p[K.avatarBg] ?: 0,
                 themeMode = p[K.themeMode] ?: 0,
                 accent = p[K.accent] ?: 0,
+                customHue = p[K.customHue] ?: 28f,
                 dynamicColor = p[K.dynamic] ?: false,
+                font = p[K.font] ?: 0,
+                cardStyle = p[K.cardStyle] ?: 0,
+                animatedBg = p[K.animatedBg] ?: true,
+                haptics = p[K.haptics] ?: true,
+                use24h = p[K.use24h] ?: false,
+                weekStartsSunday = p[K.weekSunday] ?: false,
+                hiddenSections = p[K.hidden] ?: emptySet(),
+                customTags = (p[K.customTags] ?: "").split("\n").filter { it.isNotBlank() },
+                waterGoal = p[K.waterGoal] ?: 8,
                 reminder = p[K.reminder] ?: false,
                 reminderHour = p[K.reminderHour] ?: 20,
                 reminderMinute = p[K.reminderMinute] ?: 0,
@@ -108,16 +157,40 @@ class PrefsRepo(private val ctx: Context) {
         it[K.name] = name; it[K.avatar] = avatar; it[K.onboarded] = true
     }
 
-    suspend fun setProfile(name: String? = null, avatar: String? = null) = edit {
+    suspend fun setProfile(name: String? = null, avatar: String? = null, avatarBg: Int? = null) = edit {
         name?.let { n -> it[K.name] = n }
-        avatar?.let { a -> it[K.avatar] = a }
+        avatar?.let { a -> it[K.avatar] = a; it.remove(K.avatarPhoto) }
+        avatarBg?.let { b -> it[K.avatarBg] = b }
     }
 
-    suspend fun setAppearance(mode: Int? = null, accent: Int? = null, dynamic: Boolean? = null) = edit {
+    suspend fun setAvatarPhoto(path: String?) = edit { it.put(K.avatarPhoto, path) }
+
+    suspend fun setAppearance(
+        mode: Int? = null, accent: Int? = null, dynamic: Boolean? = null, hue: Float? = null,
+        font: Int? = null, cardStyle: Int? = null, animatedBg: Boolean? = null
+    ) = edit {
         mode?.let { m -> it[K.themeMode] = m }
         accent?.let { a -> it[K.accent] = a }
         dynamic?.let { d -> it[K.dynamic] = d }
+        hue?.let { h -> it[K.customHue] = h }
+        font?.let { f -> it[K.font] = f }
+        cardStyle?.let { c -> it[K.cardStyle] = c }
+        animatedBg?.let { b -> it[K.animatedBg] = b }
     }
+
+    suspend fun setBehavior(haptics: Boolean? = null, use24h: Boolean? = null, weekSunday: Boolean? = null, waterGoal: Int? = null) = edit {
+        haptics?.let { h -> it[K.haptics] = h }
+        use24h?.let { u -> it[K.use24h] = u }
+        weekSunday?.let { w -> it[K.weekSunday] = w }
+        waterGoal?.let { g -> it[K.waterGoal] = g }
+    }
+
+    suspend fun setSectionVisible(section: String, visible: Boolean) = edit {
+        val cur = it[K.hidden] ?: emptySet()
+        it[K.hidden] = if (visible) cur - section else cur + section
+    }
+
+    suspend fun setCustomTags(tags: List<String>) = edit { it[K.customTags] = tags.joinToString("\n") }
 
     suspend fun setReminder(enabled: Boolean, hour: Int, minute: Int) = edit {
         it[K.reminder] = enabled; it[K.reminderHour] = hour; it[K.reminderMinute] = minute

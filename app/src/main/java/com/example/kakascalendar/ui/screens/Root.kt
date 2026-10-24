@@ -58,13 +58,14 @@ fun AppRoot(vm: MainVm, prefs: Prefs) {
     val haptics = LocalHapticFeedback.current
     var confetti by remember { mutableIntStateOf(0) }
     var banner by remember { mutableStateOf<Banner?>(null) }
+    val hapticsOn by rememberUpdatedState(prefs.haptics)
 
     LaunchedEffect(Unit) {
         vm.events.collect { ev ->
             when (ev) {
                 is UiEvent.Unlocked -> {
                     confetti++
-                    haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                    if (hapticsOn) haptics.performHapticFeedback(HapticFeedbackType.LongPress)
                     banner = Banner(ev.achievement.emoji, "Achievement unlocked!", "${ev.achievement.title} · +${ev.achievement.xp} XP")
                 }
                 is UiEvent.LevelUp -> {
@@ -127,9 +128,15 @@ fun AppRoot(vm: MainVm, prefs: Prefs) {
                                 when (t) {
                                     0 -> HomeScreen(
                                         dash = dash,
+                                        prefs = prefs,
+                                        onWater = { d ->
+                                            if (prefs.haptics) haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                            vm.addWater(d)
+                                        },
+                                        onShare = { vm.shareBrag(it) },
                                         onEdit = { openAdd(it) },
                                         onDelete = vm::delete,
-                                        onQuickLog = { haptics.performHapticFeedback(HapticFeedbackType.LongPress); vm.quickLog() },
+                                        onQuickLog = { if (prefs.haptics) haptics.performHapticFeedback(HapticFeedbackType.LongPress); vm.quickLog() },
                                         onTimer = { if (prefs.timerStart == 0L) vm.startTimer(); route = "timer" },
                                         onInsights = { tab = 2 }
                                     )
@@ -148,7 +155,7 @@ fun AppRoot(vm: MainVm, prefs: Prefs) {
                     FloatingNav(
                         tab = tab,
                         onTab = { tab = it },
-                        onAdd = { haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove); openAdd(null) },
+                        onAdd = { if (prefs.haptics) haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove); openAdd(null) },
                         modifier = Modifier.align(Alignment.BottomCenter)
                     )
                 }
@@ -166,6 +173,7 @@ fun AppRoot(vm: MainVm, prefs: Prefs) {
     if (sheetOpen) {
         AddEntrySheet(
             initial = editing,
+            customTags = prefs.customTags,
             prefillDuration = prefillDuration,
             onDismiss = { sheetOpen = false; editing = null },
             onSave = { vm.save(it); sheetOpen = false; editing = null }
@@ -196,7 +204,7 @@ private fun Header(prefs: Prefs, level: Int, tab: Int, onAvatar: () -> Unit) {
         else -> "Friends, feed & bragging rights"
     }
     Row(Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-        Avatar(prefs.avatar, size = 48.dp, ring = true, onClick = onAvatar)
+        MyAvatar(prefs, size = 48.dp, ring = true, onClick = onAvatar)
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
             Text(sub, style = MaterialTheme.typography.labelLarge, color = cs.onSurfaceVariant)

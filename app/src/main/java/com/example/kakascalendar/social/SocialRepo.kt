@@ -81,6 +81,14 @@ class SocialRepo(private val prefs: PrefsRepo) {
         return r.errorText()
     }
 
+    /** Uploads (or with null, removes) the profile photo. Silently skipped when signed out. */
+    suspend fun syncPhoto(base64Jpeg: String?): String? {
+        if (api() == null) return null
+        val r = call { if (base64Jpeg != null) it.uploadPhoto(base64Jpeg) else it.deletePhoto() }
+        r.getOrNull()?.let { me -> _state.update { it.copy(me = me) } }
+        return r.errorText()
+    }
+
     // ───────── data ─────────
 
     suspend fun refresh(): String? {

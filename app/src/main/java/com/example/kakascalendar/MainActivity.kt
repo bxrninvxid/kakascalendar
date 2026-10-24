@@ -18,7 +18,12 @@ import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.runtime.CompositionLocalProvider
 import com.example.kakascalendar.ui.components.AppBackground
+import com.example.kakascalendar.ui.components.LocalPhotoAuth
+import com.example.kakascalendar.ui.components.LocalUi
+import com.example.kakascalendar.ui.components.PhotoAuth
+import com.example.kakascalendar.ui.components.UiSettings
 import com.example.kakascalendar.ui.screens.AppRoot
 import com.example.kakascalendar.ui.screens.LockScreen
 import com.example.kakascalendar.ui.theme.KakaTheme
@@ -37,7 +42,12 @@ class MainActivity : FragmentActivity() {
         setContent {
             val prefs by vm.prefs.collectAsStateWithLifecycle()
             val p = prefs
-            KakaTheme(p?.themeMode ?: 0, p?.accent ?: 0, p?.dynamicColor ?: false) {
+            KakaTheme(p?.themeMode ?: 0, p?.accent ?: 0, p?.dynamicColor ?: false, p?.customHue ?: 28f, p?.font ?: 0) {
+              val ui = UiSettings(
+                  cardStyle = p?.cardStyle ?: 0, animatedBg = p?.animatedBg ?: true, haptics = p?.haptics ?: true,
+                  use24h = p?.use24h ?: false, weekStartsSunday = p?.weekStartsSunday ?: false
+              )
+              CompositionLocalProvider(LocalUi provides ui, LocalPhotoAuth provides PhotoAuth(p?.serverUrl ?: "", p?.token)) {
                 val dark = isAppDark(p?.themeMode ?: 0)
                 LaunchedEffect(dark) {
                     enableEdgeToEdge(
@@ -56,6 +66,7 @@ class MainActivity : FragmentActivity() {
                         AppRoot(vm, p)
                     }
                 }
+              }
             }
         }
     }

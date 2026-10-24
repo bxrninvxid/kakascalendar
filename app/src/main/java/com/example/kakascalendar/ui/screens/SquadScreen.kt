@@ -201,7 +201,7 @@ private fun FeedCard(item: FeedItem, meId: Long?, onReact: (String) -> Unit) {
     val highlight = item.kind == "nudge" && item.user.id != meId
     GlassCard(padding = 14.dp, tint = if (highlight) cs.secondaryContainer.copy(alpha = 0.8f) else null) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Avatar(item.user.avatar, 44.dp)
+            Avatar(item.user.avatar, 44.dp, photo = rememberUserPhoto(item.user.id, item.user.photoVersion))
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
                 Text(
@@ -294,7 +294,7 @@ private fun Podium(top: List<UserDto>, m: Metric, meId: Long?) {
                 val medal = when (place) { 1 -> "🥇"; 2 -> "🥈"; else -> "🥉" }
                 Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.weight(1f)) {
                     if (place == 1) Text("👑", fontSize = 22.sp)
-                    Avatar(u.avatar, if (place == 1) 64.dp else 52.dp, ring = place == 1)
+                    Avatar(u.avatar, if (place == 1) 64.dp else 52.dp, ring = place == 1, photo = rememberUserPhoto(u.id, u.photoVersion))
                     Text(if (u.id == meId) "You" else u.displayName, fontWeight = FontWeight.Bold, maxLines = 1,
                         style = MaterialTheme.typography.bodyMedium)
                     Text("${m.emoji} ${m.value(u)}${m.unit}", style = MaterialTheme.typography.labelMedium,
@@ -321,7 +321,7 @@ private fun RankRow(rank: Int, u: UserDto, value: String, me: Boolean) {
     GlassCard(padding = 12.dp, tint = if (me) cs.primaryContainer.copy(alpha = 0.7f) else null) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text("#$rank", fontWeight = FontWeight.Black, modifier = Modifier.width(40.dp))
-            Avatar(u.avatar, 38.dp)
+            Avatar(u.avatar, 38.dp, photo = rememberUserPhoto(u.id, u.photoVersion))
             Spacer(Modifier.width(10.dp))
             Column(Modifier.weight(1f)) {
                 Text(if (me) "You" else u.displayName, fontWeight = FontWeight.Bold)
@@ -425,7 +425,7 @@ private fun FriendsSection(vm: MainVm, state: SocialState, prefs: Prefs) {
 private fun PersonRow(u: UserDto, sub: String, onLongClick: (() -> Unit)? = null, actions: @Composable RowScope.() -> Unit) {
     GlassCard(padding = 12.dp) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Avatar(u.avatar, 42.dp)
+            Avatar(u.avatar, 42.dp, photo = rememberUserPhoto(u.id, u.photoVersion))
             Spacer(Modifier.width(10.dp))
             Column(
                 Modifier.weight(1f).then(if (onLongClick != null) Modifier.clickable(onClick = onLongClick) else Modifier)

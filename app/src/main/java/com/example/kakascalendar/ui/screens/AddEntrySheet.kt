@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.sp
 import com.example.kakascalendar.data.Entry
 import com.example.kakascalendar.domain.*
 import com.example.kakascalendar.ui.components.GradientButton
+import com.example.kakascalendar.ui.components.LocalUi
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -32,7 +33,7 @@ import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
-fun AddEntrySheet(initial: Entry?, prefillDuration: Int, onDismiss: () -> Unit, onSave: (Entry) -> Unit) {
+fun AddEntrySheet(initial: Entry?, customTags: List<String>, prefillDuration: Int, onDismiss: () -> Unit, onSave: (Entry) -> Unit) {
     val ctx = LocalContext.current
     val cs = MaterialTheme.colorScheme
     val start = initial?.let { Instant.ofEpochMilli(it.timestamp).atZone(zone()).toLocalDateTime() }
@@ -45,6 +46,11 @@ fun AddEntrySheet(initial: Entry?, prefillDuration: Int, onDismiss: () -> Unit, 
     var time by remember { mutableStateOf(start.toLocalTime()) }
     var rating by remember { mutableIntStateOf(initial?.rating ?: 0) }
     var duration by remember { mutableIntStateOf(initial?.durationSec ?: prefillDuration) }
+    val tagOptions = remember(customTags, initial) {
+        val base = allTags(customTags)
+        base + (initial?.tagList().orEmpty().filter { it !in base })
+    }
+    val use24h = LocalUi.current.use24h
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -68,8 +74,8 @@ fun AddEntrySheet(initial: Entry?, prefillDuration: Int, onDismiss: () -> Unit, 
                     label = { Text("📅  ${dayLabel(date)}") }
                 )
                 AssistChip(
-                    onClick = { TimePickerDialog(ctx, { _, h, m -> time = LocalTime.of(h, m) }, time.hour, time.minute, false).show() },
-                    label = { Text("🕒  ${time.format(DateTimeFormatter.ofPattern("h:mm a"))}") }
+                    onClick = { TimePickerDialog(ctx, { _, h, m -> time = LocalTime.of(h, m) }, time.hour, time.minute, use24h).show() },
+                    label = { Text("🕒  ${time.format(timeFormatter(use24h))}") }
                 )
             }
 
@@ -133,7 +139,7 @@ fun AddEntrySheet(initial: Entry?, prefillDuration: Int, onDismiss: () -> Unit, 
             // Tags
             FieldLabel("Tags")
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                TAGS.forEach { tg ->
+                tagOptions.forEach { tg ->
                     FilterChip(
                         selected = tg in tags,
                         onClick = { tags = if (tg in tags) tags - tg else tags + tg },
@@ -157,7 +163,7 @@ fun AddEntrySheet(initial: Entry?, prefillDuration: Int, onDismiss: () -> Unit, 
                         timestamp = ts,
                         type = type,
                         comment = comment.trim(),
-                        tags = TAGS.filter { it in tags }.joinToString(","),
+                        tags = tagOptions.filter { it in tags }.joinToString(","),
                         durationSec = duration,
                         rating = rating
                     )

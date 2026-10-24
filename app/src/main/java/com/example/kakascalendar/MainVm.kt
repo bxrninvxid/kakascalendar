@@ -6,6 +6,10 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.kakascalendar.data.Entry
 import com.example.kakascalendar.data.Prefs
+import com.example.kakascalendar.data.WaterDay
+import com.example.kakascalendar.system.BragCard
+import com.example.kakascalendar.system.Photos
+import com.example.kakascalendar.system.ShareCard
 import com.example.kakascalendar.domain.*
 import com.example.kakascalendar.social.FeedItem
 import com.example.kakascalendar.social.StatsReq
@@ -29,9 +33,12 @@ data class Dash(
     val achievements: List<Achievement> = emptyList(),
     val level: LevelInfo = levelFor(0),
     val insights: List<Insight> = emptyList(),
+    val water: Map<LocalDate, Int> = emptyMap(),
+    val waterGoal: Int = 8,
     val loaded: Boolean = false
 ) {
     val loggedToday get() = LocalDate.now() in days
+    val waterToday get() = water[LocalDate.now()] ?: 0
 }
 
 sealed interface UiEvent {
@@ -41,11 +48,12 @@ sealed interface UiEvent {
     data class Deleted(val entry: Entry) : UiEvent
 }
 
-private fun buildDash(e: List<Entry>, friends: Int): Dash {
+private fun buildDash(e: List<Entry>, friends: Int, waterRows: List<WaterDay>, waterGoal: Int): Dash {
     val today = LocalDate.now()
     val days = daysOf(e)
     val streak = streakDates(days, today)
-    val ach = achievements(e, friends)
+    val water = waterRows.mapNotNull { w -> runCatching { LocalDate.parse(w.date) to w.glasses }.getOrNull() }.toMap()
+    val ach = achievements(e, friends, water.count { it.value >= waterGoal })
     return Dash(
         entries = e,
         days = days,
@@ -56,7 +64,9 @@ private fun buildDash(e: List<Entry>, friends: Int): Dash {
         weekCount = e.count { !it.date().isBefore(today.minusDays(6)) },
         achievements = ach,
         level = levelFor(xpFor(e, ach)),
-        insights = insights(e, today),
+        insights = insights(e, today, water, waterGoal),
+        water = water,
+        waterGoal = waterGoal,
         loaded = true
     )
 }
@@ -70,10 +80,13 @@ class MainVm(app: Application) : AndroidViewModel(app) {
 
     val prefs: StateFlow<Prefs?> = prefsRepo.flow.stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
+    private val waterDao = kapp.db.water()
+
     val dash: StateFlow<Dash> = combine(
         dao.all(),
-        prefsRepo.flow.map { it.friendsCount }.distinctUntilChanged()
-    ) { e, f -> buildDash(e, f) }
+        waterDao.all(),
+        prefsRepo.flow.map { it.friendsCount to it.waterGoal }.distinctUntilChanged()
+    ) { e, w, (f, goal) -> buildDash(e, f, w, goal) }
         .flowOn(Dispatchers.Default)
         .stateIn(viewModelScope, SharingStarted.Eagerly, Dash())
 
@@ -174,13 +187,89 @@ class MainVm(app: Application) : AndroidViewModel(app) {
         prefsRepo.finishOnboarding(name.trim().ifEmpty { "Champion" }, avatar)
     }
 
-    fun setProfile(name: String? = null, avatar: String? = null) = viewModelScope.launch {
-        prefsRepo.setProfile(name?.trim()?.ifEmpty { null }, avatar)
-        social.updateProfile(displayName = name?.trim()?.ifEmpty { null }, avatar = avatar)
+    fun setProfile(name: String? = null, avatar: String? = null, avatarBg: Int? = null) = viewModelScope.launch {
+        val hadPhoto = prefsRepo.current().avatarPhoto != null
+        prefsRepo.setProfile(name?.trim()?.ifEmpty { null }, avatar, avatarBg)
+        if (avatar != null && hadPhoto) {
+            withContext(Dispatchers.IO) { Photos.deleteAvatar(getApplication()) }
+            social.syncPhoto(null)
+        }
+        if (name != null || avatar != null) social.updateProfile(displayName = name?.trim()?.ifEmpty { null }, avatar = avatar)
     }
 
-    fun setAppearance(mode: Int? = null, accent: Int? = null, dynamic: Boolean? = null) = viewModelScope.launch {
-        prefsRepo.setAppearance(mode, accent, dynamic)
+    /** Crops, saves and (if signed in) uploads a photo picked from the gallery. */
+    fun setAvatarPhoto(uri: Uri) = viewModelScope.launch {
+        val result = withContext(Dispatchers.IO) {
+            runCatching {
+                val bmp = Photos.loadSquare(getApplication(), uri) ?: error("unreadable")
+                val path = Photos.saveAvatar(getApplication(), bmp)
+                val upload = Photos.toUploadBase64(bmp)
+                bmp.recycle()
+                path to upload
+            }
+        }
+        result.onSuccess { (path, upload) ->
+            prefsRepo.setAvatarPhoto(path)
+            msg("📸 Looking good")
+            social.syncPhoto(upload)?.let { msg("Saved locally, but Squad upload failed: $it") }
+        }.onFailure { msg("Couldn't read that image. Try another one.") }
+    }
+
+    fun removeAvatarPhoto() = viewModelScope.launch {
+        withContext(Dispatchers.IO) { Photos.deleteAvatar(getApplication()) }
+        prefsRepo.setAvatarPhoto(null)
+        social.syncPhoto(null)
+    }
+
+    fun setAppearance(
+        mode: Int? = null, accent: Int? = null, dynamic: Boolean? = null, hue: Float? = null,
+        font: Int? = null, cardStyle: Int? = null, animatedBg: Boolean? = null
+    ) = viewModelScope.launch {
+        prefsRepo.setAppearance(mode, accent, dynamic, hue, font, cardStyle, animatedBg)
+    }
+
+    fun setBehavior(haptics: Boolean? = null, use24h: Boolean? = null, weekSunday: Boolean? = null, waterGoal: Int? = null) =
+        viewModelScope.launch { prefsRepo.setBehavior(haptics, use24h, weekSunday, waterGoal?.coerceIn(1, 20)) }
+
+    fun setSectionVisible(section: String, visible: Boolean) = viewModelScope.launch {
+        prefsRepo.setSectionVisible(section, visible)
+    }
+
+    fun addCustomTag(raw: String) = viewModelScope.launch {
+        val tag = raw.trim().replace(",", " ").take(24)
+        if (tag.isEmpty()) return@launch
+        val cur = prefsRepo.current().customTags
+        if (tag in cur || tag in TAGS) { msg("You already have that tag"); return@launch }
+        prefsRepo.setCustomTags(cur + tag)
+    }
+
+    fun removeCustomTag(tag: String) = viewModelScope.launch {
+        prefsRepo.setCustomTags(prefsRepo.current().customTags - tag)
+    }
+
+    // ───────── water ─────────
+
+    fun addWater(delta: Int) = viewModelScope.launch {
+        val key = LocalDate.now().toString()
+        val cur = waterDao.get(key)?.glasses ?: 0
+        val next = (cur + delta).coerceIn(0, 40)
+        waterDao.upsert(WaterDay(key, next))
+        val goal = prefsRepo.current().waterGoal
+        if (delta > 0 && cur < goal && next >= goal) msg("💧 Water goal smashed!")
+    }
+
+    // ───────── brag card ─────────
+
+    fun shareBrag(colors: List<Int>) = viewModelScope.launch {
+        val d = dash.value
+        val p = prefsRepo.current()
+        val card = BragCard(
+            name = p.name.ifBlank { "Champion" }, avatar = p.avatar, streak = d.streak, best = d.best,
+            total = d.entries.size, level = d.level.level, levelTitle = d.level.title,
+            trophies = d.achievements.count { it.unlocked }, trophiesTotal = d.achievements.size, colors = colors
+        )
+        runCatching { ShareCard.share(getApplication(), card) }
+            .onFailure { msg("Couldn't create the image: ${it.message}") }
     }
 
     fun setReminder(enabled: Boolean, hour: Int, minute: Int) = viewModelScope.launch {
@@ -236,6 +325,13 @@ class MainVm(app: Application) : AndroidViewModel(app) {
             val p = prefsRepo.current()
             val err = social.authenticate(server, username, password, register, p.name, p.avatar, p.shareLevel)
             onDone(err)
+            if (err == null) p.avatarPhoto?.let { path ->
+                withContext(Dispatchers.IO) {
+                    runCatching {
+                        android.graphics.BitmapFactory.decodeFile(path)?.let { bmp -> Photos.toUploadBase64(bmp).also { bmp.recycle() } }
+                    }.getOrNull()
+                }?.let { social.syncPhoto(it) }
+            }
             if (err == null) msg(if (register) "🎉 Welcome to the Squad!" else "👋 Welcome back!")
         }
 
