@@ -1,0 +1,50 @@
+name: iOS build
+on:
+  push:
+    paths: ['ios/**', '.github/workflows/ios.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - name: Select newest Xcode
+        run: |
+          ls -d /Applications/Xcode*.app
+          X=$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -1)
+          [ -n "$X" ] && sudo xcode-select -s "$X"
+          xcodebuild -version
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Build (unsigned)
+        id: build
+        continue-on-error: true
+        working-directory: ios
+        run: |
+          set -o pipefail
+          xcodegen generate
+          xcodebuild -project Kakascalendar.xcodeproj -scheme Kakascalendar -configuration Release \
+            -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" build 2>&1 | tee ../build.log
+      - name: Package unsigned IPA
+        if: steps.build.outcome == 'success'
+        run: |
+          mkdir Payload
+          cp -R ios/build/Build/Products/Release-iphoneos/Kakascalendar.app Payload/
+          zip -qry Kakascalendar-unsigned.ipa Payload
+      - name: Publish result to the ci-ios branch
+        if: always()
+        run: |
+          mkdir out
+          { echo "outcome=${{ steps.build.outcome }} sha=${GITHUB_SHA}"; xcodebuild -version | head -1;
+            grep -E "error:|\*\* BUILD" build.log | sort -u | head -300; } > out/summary.txt || true
+          tail -c 3000000 build.log > out/build.log || true
+          [ -f Kakascalendar-unsigned.ipa ] && cp Kakascalendar-unsigned.ipa out/ || true
+          cd out
+          git init -q -b ci-ios
+          git config user.name "ci"; git config user.email "ci@users.noreply.github.com"
+          git add -A && git commit -qm "iOS build ${GITHUB_SHA}"
+          git push -qf "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}" ci-ios

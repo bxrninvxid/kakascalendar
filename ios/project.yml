@@ -1,0 +1,43 @@
+name: Kakascalendar
+options:
+  bundleIdPrefix: com.example
+  deploymentTarget:
+    iOS: "26.0"
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    SWIFT_STRICT_CONCURRENCY: minimal
+targets:
+  Kakascalendar:
+    type: application
+    platform: iOS
+    sources: [Kakascalendar]
+    info:
+      path: Kakascalendar/Info.plist
+      properties:
+        CFBundleDisplayName: Kakascalendar
+        CFBundleShortVersionString: "2.3"
+        CFBundleVersion: "4"
+        UILaunchScreen: {}
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: false
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+        NSFaceIDUsageDescription: Unlock Kakascalendar with Face ID.
+        NSPhotoLibraryUsageDescription: Pick a photo for your avatar.
+        NSAppTransportSecurity:
+          NSAllowsArbitraryLoads: true   # lets you test a Squad server over http on your LAN
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.example.kakascalendar
+        TARGETED_DEVICE_FAMILY: "1"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ENABLE_PREVIEWS: YES
+schemes:
+  Kakascalendar:
+    build:
+      targets:
+        Kakascalendar: all
+    run:
+      config: Debug
+    archive:
+      config: Release

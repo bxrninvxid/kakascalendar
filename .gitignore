@@ -8,3 +8,6 @@ local.properties
 *.aab
 server/*.db
 server/__pycache__/
+ios/build/
+ios/*.xcodeproj/
+ios/Kakascalendar/Info.plist
