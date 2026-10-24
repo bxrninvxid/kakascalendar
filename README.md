@@ -46,7 +46,7 @@ Version 1 was perfect. Version 2 was *more* perfect. Version 2.4 runs on two ope
 |---|---|---|
 | 🔥 | **Streaks** | Animated counter, weekly strip, personal best. Miss a day? Don't. |
 | ⭐ | **20 ranks + prestige** | From 🧷 *Toilet Trainee* through 📜 *Lord of the Rolls* to 🦸 **The Homelander of Hygiene**, then ★ prestige stars forever. See the [Rank Ladder](#-the-rank-ladder). |
-| 🚫 | **Daily cap** | Max **6 logs a day**. Nobody poops 50 times a day. Nobody. Only the first 3 earn XP, so consistency beats spam. |
+| 🚫 | **Daily cap** | Max **5 logs a day**. Nobody poops 50 times a day. Nobody. Only the first 3 earn XP, so consistency beats spam. |
 | 🏆 | **35 trophies in 4 tiers** | Bronze, Silver, Gold and **Legendary**. Confetti and a banner every time. |
 | 🧠 | **Smart insights** | Spots your routine, predicts today's visit, catches the coffee effect, flags hard/loose streaks, low water, paper-heavy weeks and suspicious amounts of pooping at work. |
 | 📊 | **Stats** | 7D / 30D / 90D / All, type donut, **Throne map**, average wipes, time-of-day and weekday charts, and a GitHub-style 6-month heatmap. |
@@ -200,22 +200,22 @@ Members browse everyone on the server and send friend requests from the list; no
 
 ## 🪜 The Rank Ladder
 
-Earn XP every day you show up: **+5** for logging at all, and **10 XP** for each of your first **3** logs (+2 for a rating, +2 for a comment, +1 for tags). Trophies add their own XP on top. That's roughly **18 XP per day**, so the summit takes real dedication.
+Earn XP every day you show up: **+5** for logging at all, and **10 XP** for each of your first **3** logs (+2 for a rating, +2 for a comment, +1 for tags). Trophies add their own XP on top. That's roughly **18 XP per day** plus trophies. Log every day and you hit rank 5 in about a week, rank 10 in about a month and the summit in about **3 months**. Max **5 logs a day**, so spamming gets you nowhere.
 
 | # | Rank | XP | # | Rank | XP |
 |---|---|---|---|---|---|
-| 1 | 🧷 Toilet Trainee | 0 | 11 | 🔧 Plumbing Baron | 2,900 |
-| 2 | 🐣 Potty Rookie | 60 | 12 | 💦 Bidet Duke | 3,600 |
-| 3 | 🥣 Bowl Apprentice | 150 | 13 | 📜 Lord of the Rolls | 4,400 |
-| 4 | 🎖️ Flush Cadet | 300 | 14 | 🤴 Porcelain Prince | 5,300 |
-| 5 | 🔥 Seat Warmer | 500 | 15 | 👑 Throne King | 6,300 |
-| 6 | 📅 Regular Regular | 750 | 16 | 🕌 Sultan of Squat | 7,500 |
-| 7 | 🧻 Paper Squire | 1,050 | 17 | 🏛️ Emperor of Evacuation | 9,000 |
-| 8 | 🧭 Porcelain Scout | 1,400 | 18 | ⚡ Porcelain God | 11,000 |
-| 9 | 🌀 Flush Master | 1,800 | 19 | 🌟 Legend of the Loo | 13,500 |
-| 10 | 🛡️ Throne Knight | 2,300 | 20 | 🦸 **The Homelander of Hygiene** | 16,500 |
+| 1 | 🧷 Toilet Trainee | 0 | 11 | 🔧 Plumbing Baron | 1,650 |
+| 2 | 🐣 Potty Rookie | 40 | 12 | 💦 Bidet Duke | 1,800 |
+| 3 | 🥣 Bowl Apprentice | 120 | 13 | 📜 Lord of the Rolls | 1,950 |
+| 4 | 🎖️ Flush Cadet | 250 | 14 | 🤴 Porcelain Prince | 2,100 |
+| 5 | 🔥 Seat Warmer | 420 | 15 | 👑 Throne King | 2,250 |
+| 6 | 📅 Regular Regular | 620 | 16 | 🕌 Sultan of Squat | 2,400 |
+| 7 | 🧻 Paper Squire | 840 | 17 | 🏛️ Emperor of Evacuation | 2,550 |
+| 8 | 🧭 Porcelain Scout | 1,060 | 18 | ⚡ Porcelain God | 2,700 |
+| 9 | 🌀 Flush Master | 1,280 | 19 | 🌟 Legend of the Loo | 2,850 |
+| 10 | 🛡️ Throne Knight | 1,500 | 20 | 🦸 **The Homelander of Hygiene** | 3,000 |
 
-Beyond the top, every **3,000 XP** adds a prestige ★. Infinite glory, as it should be.
+Beyond the top, every **500 XP** adds a prestige ★. Infinite glory, as it should be.
 
 ---
 

@@ -83,35 +83,35 @@ struct Rank: Identifiable {
     var id: String { title }
 }
 
-/// The rank ladder. ~18 XP per logged day, so the top takes well over a year of dedication.
+/// The rank ladder. ~18 XP per logged day plus trophy XP: daily logging reaches the top in about 3 months.
 let RANKS: [Rank] = [
     Rank(title: "Toilet Trainee", emoji: "🧷", minXp: 0),
-    Rank(title: "Potty Rookie", emoji: "🐣", minXp: 60),
-    Rank(title: "Bowl Apprentice", emoji: "🥣", minXp: 150),
-    Rank(title: "Flush Cadet", emoji: "🎖️", minXp: 300),
-    Rank(title: "Seat Warmer", emoji: "🔥", minXp: 500),
-    Rank(title: "Regular Regular", emoji: "📅", minXp: 750),
-    Rank(title: "Paper Squire", emoji: "🧻", minXp: 1050),
-    Rank(title: "Porcelain Scout", emoji: "🧭", minXp: 1400),
-    Rank(title: "Flush Master", emoji: "🌀", minXp: 1800),
-    Rank(title: "Throne Knight", emoji: "🛡️", minXp: 2300),
-    Rank(title: "Plumbing Baron", emoji: "🔧", minXp: 2900),
-    Rank(title: "Bidet Duke", emoji: "💦", minXp: 3600),
-    Rank(title: "Lord of the Rolls", emoji: "📜", minXp: 4400),
-    Rank(title: "Porcelain Prince", emoji: "🤴", minXp: 5300),
-    Rank(title: "Throne King", emoji: "👑", minXp: 6300),
-    Rank(title: "Sultan of Squat", emoji: "🕌", minXp: 7500),
-    Rank(title: "Emperor of Evacuation", emoji: "🏛️", minXp: 9000),
-    Rank(title: "Porcelain God", emoji: "⚡", minXp: 11000),
-    Rank(title: "Legend of the Loo", emoji: "🌟", minXp: 13500),
-    Rank(title: "The Homelander of Hygiene", emoji: "🦸", minXp: 16500)
+    Rank(title: "Potty Rookie", emoji: "🐣", minXp: 40),
+    Rank(title: "Bowl Apprentice", emoji: "🥣", minXp: 120),
+    Rank(title: "Flush Cadet", emoji: "🎖️", minXp: 250),
+    Rank(title: "Seat Warmer", emoji: "🔥", minXp: 420),
+    Rank(title: "Regular Regular", emoji: "📅", minXp: 620),
+    Rank(title: "Paper Squire", emoji: "🧻", minXp: 840),
+    Rank(title: "Porcelain Scout", emoji: "🧭", minXp: 1060),
+    Rank(title: "Flush Master", emoji: "🌀", minXp: 1280),
+    Rank(title: "Throne Knight", emoji: "🛡️", minXp: 1500),
+    Rank(title: "Plumbing Baron", emoji: "🔧", minXp: 1650),
+    Rank(title: "Bidet Duke", emoji: "💦", minXp: 1800),
+    Rank(title: "Lord of the Rolls", emoji: "📜", minXp: 1950),
+    Rank(title: "Porcelain Prince", emoji: "🤴", minXp: 2100),
+    Rank(title: "Throne King", emoji: "👑", minXp: 2250),
+    Rank(title: "Sultan of Squat", emoji: "🕌", minXp: 2400),
+    Rank(title: "Emperor of Evacuation", emoji: "🏛️", minXp: 2550),
+    Rank(title: "Porcelain God", emoji: "⚡", minXp: 2700),
+    Rank(title: "Legend of the Loo", emoji: "🌟", minXp: 2850),
+    Rank(title: "The Homelander of Hygiene", emoji: "🦸", minXp: 3000)
 ]
 
-let prestigeStep = 3000
+let prestigeStep = 500
 /// Logs beyond this per day still count for stats but earn no XP.
 let xpLogsPerDay = 3
 /// Hard cap: nobody poops more than this in a day. Nobody.
-let maxLogsPerDay = 6
+let maxLogsPerDay = 5
 
 /// XP: +5 per logged day, first 3 logs of a day 10 XP each (+2 rating, +2 comment, +1 tags), plus trophy XP.
 func xpFor(_ e: [Entry], _ ach: [Achievement]) -> Int {

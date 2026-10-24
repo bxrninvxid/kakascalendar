@@ -30,7 +30,7 @@ enum class StoolType(val n: Int, val emoji: String, val label: String, val desc:
 }
 
 /** Hard cap on entries per calendar day. Nobody genuinely goes more than this. */
-const val MAX_LOGS_PER_DAY = 6
+const val MAX_LOGS_PER_DAY = 5
 
 const val COFFEE = "☕ Coffee"
 const val SHOWER = "🚿 Shower after"

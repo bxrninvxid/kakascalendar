@@ -75,33 +75,33 @@ data class LevelInfo(val level: Int, val title: String, val emoji: String, val x
 data class Rank(val title: String, val emoji: String, val minXp: Int)
 
 /**
- * The rank ladder. A normal day (1 log + a rating or tag) is worth ~18 XP, so:
- * ~1 week → Bowl Apprentice, ~1 month → Regular Regular, ~6 months → Lord of the Rolls,
- * ~1 year (with trophies) → Emperor of Evacuation. The top takes real dedication.
+ * The rank ladder. A normal day (1 log + a rating or tag) is worth ~18 XP and trophies add
+ * the rest, so logging daily gets you: day 1 → Potty Rookie, ~1 week → Seat Warmer,
+ * ~1 month → Plumbing Baron, ~3 months → The Homelander of Hygiene. After that, prestige stars.
  */
 val RANKS = listOf(
     Rank("Toilet Trainee", "🧷", 0),
-    Rank("Potty Rookie", "🐣", 60),
-    Rank("Bowl Apprentice", "🥣", 150),
-    Rank("Flush Cadet", "🎖️", 300),
-    Rank("Seat Warmer", "🔥", 500),
-    Rank("Regular Regular", "📅", 750),
-    Rank("Paper Squire", "🧻", 1050),
-    Rank("Porcelain Scout", "🧭", 1400),
-    Rank("Flush Master", "🌀", 1800),
-    Rank("Throne Knight", "🛡️", 2300),
-    Rank("Plumbing Baron", "🔧", 2900),
-    Rank("Bidet Duke", "💦", 3600),
-    Rank("Lord of the Rolls", "📜", 4400),
-    Rank("Porcelain Prince", "🤴", 5300),
-    Rank("Throne King", "👑", 6300),
-    Rank("Sultan of Squat", "🕌", 7500),
-    Rank("Emperor of Evacuation", "🏛️", 9000),
-    Rank("Porcelain God", "⚡", 11000),
-    Rank("Legend of the Loo", "🌟", 13500),
-    Rank("The Homelander of Hygiene", "🦸", 16500)
+    Rank("Potty Rookie", "🐣", 40),
+    Rank("Bowl Apprentice", "🥣", 120),
+    Rank("Flush Cadet", "🎖️", 250),
+    Rank("Seat Warmer", "🔥", 420),
+    Rank("Regular Regular", "📅", 620),
+    Rank("Paper Squire", "🧻", 840),
+    Rank("Porcelain Scout", "🧭", 1060),
+    Rank("Flush Master", "🌀", 1280),
+    Rank("Throne Knight", "🛡️", 1500),
+    Rank("Plumbing Baron", "🔧", 1650),
+    Rank("Bidet Duke", "💦", 1800),
+    Rank("Lord of the Rolls", "📜", 1950),
+    Rank("Porcelain Prince", "🤴", 2100),
+    Rank("Throne King", "👑", 2250),
+    Rank("Sultan of Squat", "🕌", 2400),
+    Rank("Emperor of Evacuation", "🏛️", 2550),
+    Rank("Porcelain God", "⚡", 2700),
+    Rank("Legend of the Loo", "🌟", 2850),
+    Rank("The Homelander of Hygiene", "🦸", 3000)
 )
-private const val PRESTIGE_STEP = 3000
+private const val PRESTIGE_STEP = 500
 
 /** Logs beyond this per day still count for stats, but earn no XP. */
 const val XP_LOGS_PER_DAY = 3
@@ -129,7 +129,7 @@ fun levelFor(xp: Int): LevelInfo {
         val next = RANKS[idx + 1]
         return LevelInfo(idx + 1, rank.title, rank.emoji, xp, xp - rank.minXp, next.minXp - rank.minXp)
     }
-    // Prestige: every 3000 XP past the top adds a star
+    // Prestige: every 500 XP past the top adds a star
     val over = xp - rank.minXp
     val stars = over / PRESTIGE_STEP
     val title = if (stars == 0) rank.title else "${rank.title} ${"★".repeat(stars.coerceAtMost(5))}${if (stars > 5) "+$stars" else ""}"
