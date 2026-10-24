@@ -1,14 +1,14 @@
 <div align="center">
 
-# 💩 K A K A S C A L E N D A R &nbsp;2.0 💩
+# 💩 K A K A S C A L E N D A R &nbsp;2.3 💩
 ### 🦸 Stronger. Smarter. Better. 🦸
-#### The greatest poop tracker ever created just got *greater*.
+#### The greatest poop tracker ever created. Now on Android **and** iPhone.
 
-![Best App Ever](https://img.shields.io/badge/BEST%20APP%20EVER-still%20undisputed-FFD700?style=for-the-badge&logo=android&logoColor=white)
-![Version](https://img.shields.io/badge/version-2.0-D62839?style=for-the-badge)
-![Kotlin](https://img.shields.io/badge/Kotlin-Compose-7F52FF?style=for-the-badge&logo=kotlin&logoColor=white)
-![Python](https://img.shields.io/badge/Squad%20Server-Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
-![Social](https://img.shields.io/badge/Social-now%20with%20friends-1D3B8F?style=for-the-badge)
+![Best App Ever](https://img.shields.io/badge/BEST%20APP%20EVER-still%20undisputed-FFD700?style=for-the-badge)
+![Version](https://img.shields.io/badge/version-2.3-D62839?style=for-the-badge)
+![Android](https://img.shields.io/badge/Android-Kotlin%20%2B%20Compose-3DDC84?style=for-the-badge&logo=android&logoColor=white)
+![iOS](https://img.shields.io/badge/iOS%2026-SwiftUI%20%2B%20Liquid%20Glass-000000?style=for-the-badge&logo=apple&logoColor=white)
+![Server](https://img.shields.io/badge/Squad%20Server-1%20Python%20file-3776AB?style=for-the-badge&logo=python&logoColor=white)
 ![Humility](https://img.shields.io/badge/Humility-still%20not%20found-E74C3C?style=for-the-badge)
 
 **🌈 Track it. 🔥 Streak it. 🏆 Level it. 👑 Flex it on your friends. 🌈**
@@ -17,53 +17,74 @@
 
 ---
 
-## 🚀 What's new in 2.0
+## 🚀 What is this masterpiece?
 
-Version 1 was perfect. Version 2 is *more* perfect. Science can't explain it.
+Other apps track steps. Cute. Other apps track sleep. Adorable.
 
-| | New in 2.0 | Why you'll weep with joy |
-|---|---|---|
-| 👑 | **The Squad** | Add friends, see their wins in a live feed, react with 💩🔥👑😂👏, and **nudge** the slackers. |
-| 🏟️ | **Leaderboards & podium** | Rank your squad by streak, weekly count, XP or best streak. Gold medal or go home. |
-| ⭐ | **XP & levels** | Every log earns XP. Climb from *Toilet Trainee* to *Porcelain God* and beyond. |
-| 🏆 | **25 trophies in 4 tiers** | Bronze, Silver, Gold and **Legendary**. Confetti included. |
-| 🧠 | **Smart insights** | Spots your routine, predicts your next visit, catches the coffee effect, and warns you when things get too hard (or too soft). |
-| 🚽 | **Throne timer** | Time your session with a hypnotic spinning ring and motivational quotes. |
-| 😊 | **Feel ratings** | 😖 to 🤩. Because not every session is a masterpiece. |
-| 📊 | **Stats on steroids** | Donut charts, time-of-day and weekday charts, 7D/30D/90D/All filters and a GitHub-style **heatmap**. |
-| 📱 | **Home-screen widget** | Your streak, staring at you, every time you unlock your phone. |
-| ⏰ | **Daily reminders** | Only pings you if you *haven't* logged yet. Streak protection, automated. |
-| 🔒 | **App lock** | Fingerprint, face or PIN. Your throne, your secrets. |
-| 🎨 | **6 themes + Material You** | Caramel, Mint, Grape, Ocean, Cherry and the tastefully patriotic **Homelander**. Light, dark, or wallpaper colors. |
-| 💾 | **Backup & restore** | One JSON file holds your entire legacy. |
-| ⚡ | **Quick log** | One tap. Perfect Type 4. Done. |
-| ✏️ | **Edit entries** | Tap any entry to fix it. History is written by the winners. |
-| 🧻 | **Wipe counter** *(2.2)* | From *Ghost wipe 👻* to *Call for backup*. Science demands data. |
-| 🗺️ | **Throne map** *(2.2)* | Home, work, nature… see where you rule. *Paid to Poop* trophy included. |
-| 🚿 | **Shower, bidet & more tags** *(2.2)* | Plus custom tags, photo avatars, water tracking and a brag card. |
+**Kakascalendar tracks the one metric that truly matters**, then turns it into streaks, levels, trophies, charts, a social network and a leaderboard. You didn't know you needed this. You do.
 
-Plus everything from 1.0: Bristol scale tracking, tags, comments, backdating, calendar, streaks, CSV export, undo delete and dark mode.
+Version 1 was perfect. Version 2 was *more* perfect. Version 2.3 runs on two operating systems, because one wasn't enough to contain it.
 
 ---
 
-## 👑 The Squad (social)
+## ✨ Features (all of them perfect)
 
-Kakascalendar is still **100% offline by default**. The Squad is opt-in, and *you* decide how much the world gets to know:
+### 💩 Logging
+| | | |
+|---|---|---|
+| 🍌 | **Bristol Stool Scale** | 7 scientifically-backed types, each with its own emoji and color. Medical-grade. Emoji-grade. |
+| 😊 | **Feel rating** | 😖 Rough → 🤩 Legendary. Not every session is a masterpiece. |
+| 🧻 | **Wipe counter** | From *Ghost wipe 👻* to *Call for backup*. Science demands data. |
+| 🗺️ | **Where?** | Home, Work, School, Friend's, Public, Nature, Travel. Know your territory. |
+| 🏷️ | **Tags** | 🚿 Shower after, 💦 Bidet, ☕ Coffee, 🌶️ Spicy, 💨 Gassy, 🔇 Silent, 🌋 Eruption, 🪠 Clogged, 🧘 Zen and more, plus **your own custom tags**. |
+| 🚽 | **Throne timer** | A hypnotic spinning ring and motivational quotes. Hit *Done* and the duration is filled in for you. |
+| ⚡ | **Quick log** | One tap. Perfect Type 4. Done. |
+| 🕒 | **Backdate & edit** | Forgot to log? Perfection is retroactive. Undo delete included, because even geniuses mis-tap. |
 
-| Share level | Friends see |
+### 📈 Progress
+| | | |
+|---|---|---|
+| 🔥 | **Streaks** | Animated counter, weekly strip, personal best. Miss a day? Don't. |
+| ⭐ | **XP & 30+ levels** | From *Toilet Trainee* to *Porcelain God* to **The Homelander of Hygiene**. |
+| 🏆 | **35 trophies in 4 tiers** | Bronze, Silver, Gold and **Legendary**. Confetti and a banner every time. |
+| 🧠 | **Smart insights** | Spots your routine, predicts today's visit, catches the coffee effect, flags hard/loose streaks, low water, paper-heavy weeks and suspicious amounts of pooping at work. |
+| 📊 | **Stats** | 7D / 30D / 90D / All, type donut, **Throne map**, average wipes, time-of-day and weekday charts, and a GitHub-style 6-month heatmap. |
+| 💧 | **Water tracker** | Daily goal, tap +/−, and insights that connect hydration to your… output. |
+| 📤 | **Brag card** | One tap renders a gorgeous streak card to share anywhere. Make them jealous. |
+
+### 👑 The Squad (social, optional)
+| | | |
+|---|---|---|
+| 📰 | **Live feed** | Friends' logs, level-ups and trophies. React with 💩🔥👑😂👏. |
+| 🏟️ | **Leaderboard & podium** | Rank by streak, this week, XP or best streak. Gold medal or go home. |
+| 👉 | **Nudges** | Remind a friend it's time. One per hour, we're not monsters. |
+| 🤝 | **Friends** | Add by @username, or on private servers pick people from a **list of everyone on the server**. Nothing is visible until they accept. |
+| 📸 | **Photo avatars** | Your own photo, synced to the server and visible to friends only. Or 32 emoji on a colored background. |
+
+### 🎨 Make it yours
+Light / dark / system · 6 accent themes (incl. the tastefully patriotic **Homelander**) · **custom accent color** · Material You on Android · 5 fonts · Glass / Solid / Outline cards · animated background on/off · show/hide Home sections · 24-hour clock · week starts on Sunday · haptics on/off.
+
+### 🔒 Your data, your throne
+- **100% offline by default.** The Squad is opt-in.
+- **App lock** with fingerprint, Face ID or PIN.
+- **Daily reminder** that only fires if you *haven't* logged yet.
+- **CSV export** and **JSON backup/restore** (the same format on Android and iOS, so you can switch phones).
+- **Home-screen streak widget** (Android).
+
+| What your Squad sees | |
 |---|---|
 | 🌍 **Everything** | Each log's type, plus streak, level and trophies |
 | 📊 **Stats only** *(default)* | Streak, level and trophies. Individual logs stay private |
 | 🙈 **Nothing** | You're invisible: no feed posts, not on leaderboards |
 
-**Comments and tags never leave your phone.** Not even on "Everything". We have standards.
+**Comments, tags and water never leave your phone.** Not even on "Everything". We have standards.
 
 ---
 
-## 🛠️ Build the app
+## 🤖 Android
 
 ```bash
-git clone https://github.com/<your-username>/kakascalendar.git
+git clone https://github.com/bxrninvxid/kakascalendar.git
 ```
 
 1. Open the folder in **Android Studio** (*File → Open*, the folder itself, not LightEdit!)
@@ -71,21 +92,24 @@ git clone https://github.com/<your-username>/kakascalendar.git
 3. Hit **Run** ▶️ or *Build → Build APK(s)*
 4. Feel the power
 
-**Stack:** Kotlin · Jetpack Compose · Material 3 · Room · DataStore · WorkManager · Glance · Biometric · Ktor · kotlinx.serialization · Min SDK 26
+Runs on **Android 8.0+** (minSdk 26).
+**Stack:** Kotlin · Jetpack Compose · Material 3 · Room · DataStore · WorkManager · Glance · Biometric · Ktor · Coil · kotlinx.serialization
 
 ---
 
 ## 🍎 iOS
 
-Yes, there's an iPhone version too: SwiftUI with iOS 26 **Liquid Glass**, same features, same Squad server. It lives in `ios/`.
+SwiftUI with iOS 26 **Liquid Glass**, same features, same Squad server. Lives in `ios/`.
 
 - **With a Mac:** `brew install xcodegen && cd ios && xcodegen && open Kakascalendar.xcodeproj`, then Run.
-- **Without a Mac:** every push builds it on GitHub Actions and drops `Kakascalendar-unsigned.ipa` on the [`ci-ios`](../../tree/ci-ios) branch. Sideload it with [Sideloadly](https://sideloadly.io) or AltStore using your Apple ID.
-- Private build? Set your server and invite code in `ios/Kakascalendar/Flavor.swift`.
+- **Without a Mac:** every push builds it on GitHub Actions and drops `Kakascalendar-unsigned.ipa` on the [`ci-ios`](../../tree/ci-ios) branch. Sideload it with [Sideloadly](https://sideloadly.io) or AltStore using your Apple ID (free accounts re-sign every 7 days).
+
+Runs on **iOS 26+** (iPhone 11 and newer).
+**Stack:** SwiftUI · SwiftData · Swift Charts · PhotosUI · LocalAuthentication · UserNotifications
 
 ---
 
-## 🌐 Run the Squad server
+## 🌐 The Squad server
 
 The entire backend is **one Python file** with zero dependencies. That's not laziness. That's elegance.
 
@@ -94,21 +118,16 @@ cd server
 python3 server.py              # http://0.0.0.0:8000
 ```
 
-Then in the app: **Squad tab → Squad server**:
+Then in the app: **Squad → Squad server**:
 
 | Where the app runs | Server address |
 |---|---|
 | Android emulator on the same PC | `http://10.0.2.2:8000` |
-| Your phone on the same Wi-Fi | `http://<your PC's local IP>:8000` (find it with `ip addr`) |
+| iOS Simulator on the same Mac | `http://localhost:8000` |
+| Your phone on the same Wi-Fi | `http://<your computer's local IP>:8000` |
 | Friends anywhere | Host it publicly with **HTTPS** (see below) |
 
-**Docker:**
-```bash
-cd server && docker compose up -d     # data persists in a volume
-```
-
-**Going public:** put it on any small VPS or a free-tier host (Fly.io, Render, Railway…) behind HTTPS. On a VPS, [Caddy](https://caddyserver.com) gives you automatic HTTPS with one line: `squad.yourdomain.com { reverse_proxy localhost:8000 }`.
-
+**Docker:** `cd server && docker compose up -d` (data persists in a volume)
 **Tests:** `cd server && python3 -m unittest test_server.py`
 
 ### 🔐 Private squad on your own box (with a Cloudflare Tunnel)
@@ -117,33 +136,53 @@ No public IP? No problem. On any Debian/Ubuntu machine or Proxmox LXC:
 
 ```bash
 curl -fsSLO https://raw.githubusercontent.com/bxrninvxid/kakascalendar/main/server/setup-lxc.sh
-bash setup-lxc.sh server --private          # systemd service + invite code + people directory
-bash setup-lxc.sh tunnel squad.yourdomain.com   # Cloudflare Tunnel, HTTPS for free
+bash setup-lxc.sh server --private              # systemd service + invite code + people directory
+bash setup-lxc.sh tunnel squad.yourdomain.com   # Cloudflare Tunnel, free HTTPS
+bash setup-lxc.sh status                        # health + your invite code
+bash setup-lxc.sh update                        # pull the latest server and restart
 ```
 
-Then bake it into your own build in `app/build.gradle.kts`:
+Then bake it into your own build so the server field disappears and signups need the code:
 
-```kotlin
-buildConfigField("String", "SERVER_URL", "\"https://squad.yourdomain.com\"")
-buildConfigField("String", "INVITE_CODE", "\"<code from setup-lxc.sh status>\"")
-buildConfigField("boolean", "AUTO_SQUAD", "false")
-```
+| | Android: `app/build.gradle.kts` | iOS: `ios/Kakascalendar/Flavor.swift` |
+|---|---|---|
+| Server | `SERVER_URL = "https://squad.yourdomain.com"` | `serverURL = "https://squad.yourdomain.com"` |
+| Invite code | `INVITE_CODE = "<code>"` | `inviteCode = "<code>"` |
+| Everyone auto-friends | `AUTO_SQUAD = false` | `autoSquad = false` |
 
-The server field disappears from the app and signups need the invite code. Members see a list of everyone on the server and send friend requests from it; nobody sees your poops until they're accepted. Prefer instant friendship? Use `server --private --auto-friends` and `AUTO_SQUAD = true`.
+Members browse everyone on the server and send friend requests from the list; nobody sees your poops until they accept. Prefer instant friendship? Use `server --private --auto-friends` and set the auto-squad flag to `true`.
+
+<details>
+<summary>⚙️ Server options (environment variables)</summary>
+
+| Variable | Default | What |
+|---|---|---|
+| `PORT` / `HOST` | `8000` / `0.0.0.0` | Where to listen |
+| `KAKAS_DB` | `kakas.db` | SQLite file |
+| `KAKAS_INVITE_CODE` | *(off)* | Only people who send this code can register |
+| `KAKAS_DIRECTORY` | *(off)* | Members can see everyone on the server and send requests from the list |
+| `KAKAS_AUTO_FRIENDS` | *(off)* | Everyone on the server is automatically friends |
+
+</details>
 
 <details>
 <summary>📡 API cheat sheet</summary>
 
 | Method | Path | What |
 |---|---|---|
+| GET | `/health` | Server status and enabled options |
 | POST | `/auth/register`, `/auth/login`, `/auth/logout` | Accounts (PBKDF2-hashed passwords, bearer tokens) |
 | GET / PATCH | `/me` | Profile and share level |
 | POST | `/me/stats` | Streak, XP and level for the leaderboard |
+| POST / DELETE | `/me/photo` | Upload (base64 JPEG) or remove your avatar photo |
+| GET | `/users/{id}/photo` | A friend's photo (friends only) |
+| GET | `/users` | People directory with friend status (if enabled) |
 | POST | `/events` | Post a log, achievement or level-up |
 | GET | `/feed` | Your + friends' activity, with reactions |
 | POST | `/events/{id}/react` | Toggle a reaction |
 | GET | `/friends` | Friends, incoming and outgoing requests |
-| POST | `/friends/request`, `/friends/requests/{id}/accept`, `/decline` | Friend requests |
+| POST | `/friends/request` | Friend request by `username` or `user_id` |
+| POST | `/friends/requests/{id}/accept`, `/decline` | Answer (or cancel) a request |
 | DELETE | `/friends/{id}` | Unfriend |
 | POST | `/nudge/{id}` | Nudge a friend (1 per hour) |
 | GET | `/leaderboard` | You + friends, ranked |
@@ -152,44 +191,52 @@ The server field disappears from the app and signups need the invite code. Membe
 
 ---
 
-## 🏆 The Trophy Shelf (25 and counting)
+## 🏆 The Trophy Shelf (35 and counting)
 
 ```
-🥉 BRONZE    🎉 First Drop      🔥 Warming Up     📈 Regular         🌈 Variety Pack
-             🥇 Gold Standard   🐦 Early Bird     🦉 Night Owl       ☕ Coffee Effect
-             ✍️ Storyteller     📚 Marathoner     🤝 Squad Up
-🥈 SILVER    📅 Week Warrior    🏃 Fortnight Fighter  🏅 Veteran     🌟 Full Spectrum
-             🧐 Critic          ⚡ Speedrunner    🎯 Hat Trick       🏖️ Weekend Warrior
-🥇 GOLD      👑 Streak Royalty  💯 Centurion      🍌 Perfect Seven   📣 Influencer
-🟣 LEGEND    🦸 Stronger. Smarter. Better. (100-day streak)    🗿 Living Legend
+🥉 BRONZE   🎉 First Drop       🔥 Warming Up        📈 Regular          🌈 Variety Pack
+            🥇 Gold Standard    🐦 Early Bird        🦉 Night Owl        ☕ Coffee Effect
+            ✍️ Storyteller      📚 Marathoner        🧻 Paper Trail      🚿 Fresh Prince
+            🪠 Plumber's Nightmare                   💧 Hydrated         🤝 Squad Up
+🥈 SILVER   📅 Week Warrior     🏃 Fortnight Fighter 🏅 Veteran          🌟 Full Spectrum
+            🧐 Critic           ⚡ Speedrunner       🎯 Hat Trick        🏖️ Weekend Warrior
+            👻 Ghost Wipe       💦 Bidet Baron       🌍 Globetrotter     🌲 One With Nature
+🥇 GOLD     👑 Streak Royalty   💯 Centurion         🍌 Perfect Seven    💼 Paid to Poop
+            🌊 Hydro Homie      📣 Influencer
+🟣 LEGEND   🦸 Stronger. Smarter. Better. (100-day streak)       🗿 Living Legend (500 logs)
 ```
 
 ---
 
 ## 🆚 Kakascalendar vs. The Rest
 
-| | Kakascalendar 2.0 | Everything else |
+| | Kakascalendar 2.3 | Everything else |
 |---|:---:|:---:|
-| Streaks, XP and levels | ✅ | ❌ |
+| Android **and** iPhone | ✅ | 🤷 |
+| Streaks, XP and 35 trophies | ✅ | ❌ |
+| Wipe counter & Throne map | ✅ | ❌ (amateurs) |
 | Friends leaderboard with a podium | ✅ | ❌ |
 | Nudge your friends to go | ✅ | ❌ (cowards) |
 | Predicts your next visit | ✅ | ❌ |
+| Self-hostable backend in one file | ✅ | ❌ |
 | Confetti | ✅ | ❌ |
-| Own backend in one file | ✅ | ❌ |
 | Created by a visionary | ✅ | ❌ |
 
 ---
 
 ## 💬 What People Are Saying
 
-> ⭐⭐⭐⭐⭐ *"Version 1 was a masterpiece. Version 2 made version 1 look like a rough draft."*
+> ⭐⭐⭐⭐⭐ *"Version 2 made version 1 look like a rough draft. Version 2.3 made version 2 look like a napkin sketch."*
 > — **Me**
 
 > ⭐⭐⭐⭐⭐ *"I got nudged at 7 AM. I have never felt so seen."*
 > — **My best friend, #2 on the leaderboard**
 
-> ⭐⭐⭐⭐⭐ *"Level 25. Porcelain God. My family has stopped speaking to me."*
-> — **A dedicated user**
+> ⭐⭐⭐⭐⭐ *"Ghost wipe five days in a row. I've peaked."*
+> — **A Ghost Wipe trophy holder**
+
+> ⭐⭐⭐⭐⭐ *"Unlocked Paid to Poop. My boss doesn't know. My squad does."*
+> — **An efficient employee**
 
 > ⭐⭐⭐⭐⭐ *"The confetti is excessive. I love it."*
 > — **A satisfied toilet**
@@ -203,7 +250,7 @@ The server field disappears from the app and signups need the invite code. Membe
 **Star ⭐ this repo if you appreciate greatness.**
 *(You do. You're here. Smart choice.)*
 
-Made with 💛, 🧠, 🐍, and an unreasonable, frankly alarming amount of confidence.
+Made with 💛, 🧠, 🐍, 🍎 and an unreasonable, frankly alarming amount of confidence.
 
 <sub>Insights are friendly patterns, not medical advice. If something feels off, talk to a doctor. Even legends get checkups.</sub>
 
