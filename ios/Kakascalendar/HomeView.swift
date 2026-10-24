@@ -1,4 +1,5 @@
 import SwiftUI
+import SwiftData
 
 struct HomeView: View {
     @Environment(AppSettings.self) private var settings

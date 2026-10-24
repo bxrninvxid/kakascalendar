@@ -291,7 +291,7 @@ struct Heatmap: View {
 struct ConfettiView: View {
     let trigger: Int
 
-    private struct Particle {
+    struct Particle {
         let x: Double, vx: Double, vy: Double, rot: Double, vr: Double, color: Color, w: Double, h: Double
     }
 
