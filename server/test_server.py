@@ -150,5 +150,44 @@ class SquadServerTest(unittest.TestCase):
         self.assertEqual(get(f"/users/{a['id']}/photo", tb)[0], 404)
 
 
+class PrivateServerTest(unittest.TestCase):
+    """Invite code + auto-friends mode."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.srv = server.make_server("127.0.0.1", 0, os.path.join(tempfile.mkdtemp(), "p.db"),
+                                     invite_code="s3cret", auto_friends=True)
+        cls.base = f"http://127.0.0.1:{cls.srv.server_address[1]}"
+        threading.Thread(target=cls.srv.serve_forever, daemon=True).start()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.srv.shutdown()
+        server.CONFIG.update(invite_code=None, auto_friends=False)
+
+    call = SquadServerTest.call
+
+    def test_invite_and_auto_friends(self):
+        self.assertTrue(self.call("GET", "/health")[1]["invite_required"])
+        self.assertEqual(self.call("POST", "/auth/register", {"username": "nope", "password": "secret123"})[0], 403)
+        self.assertEqual(self.call("POST", "/auth/register",
+                                   {"username": "nope", "password": "secret123", "invite_code": "wrong"})[0], 403)
+        toks = []
+        for n in ("ann", "ben", "cat"):
+            st, js = self.call("POST", "/auth/register", {"username": n, "password": "secret123", "invite_code": "s3cret"})
+            self.assertEqual(st, 200, js)
+            toks.append(js["token"])
+        # login doesn't need the code
+        self.assertEqual(self.call("POST", "/auth/login", {"username": "ann", "password": "secret123"})[0], 200)
+        friends = self.call("GET", "/friends", tok=toks[0])[1]["friends"]
+        self.assertEqual({f["username"] for f in friends}, {"ben", "cat"})
+        self.assertEqual(len(self.call("GET", "/leaderboard", tok=toks[0])[1]), 3)
+        self.assertEqual(self.call("POST", "/friends/request", {"username": "ben"}, toks[0])[0], 400)
+        # everyone sees each other's achievements
+        self.call("POST", "/events", {"kind": "achievement", "payload": {"title": "First Drop"}}, toks[1])
+        feed = self.call("GET", "/feed", tok=toks[2])[1]
+        self.assertTrue(any(x["user"]["username"] == "ben" and x["kind"] == "achievement" for x in feed))
+
+
 if __name__ == "__main__":
     unittest.main()

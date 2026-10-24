@@ -48,7 +48,8 @@ data class AuthReq(
     val username: String,
     val password: String,
     @SerialName("display_name") val displayName: String? = null,
-    val avatar: String? = null
+    val avatar: String? = null,
+    @SerialName("invite_code") val inviteCode: String? = null
 )
 
 @Serializable

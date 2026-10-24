@@ -9,6 +9,10 @@ Pure Python standard library. No pip install, no framework, no excuses.
 
     python3 server.py                  # listens on 0.0.0.0:8000
     PORT=9000 KAKAS_DB=/data/k.db python3 server.py
+
+Optional private-server switches (environment variables):
+    KAKAS_INVITE_CODE=...   only people who send this code can register
+    KAKAS_AUTO_FRIENDS=1    everyone on the server is automatically friends
 """
 
 import base64
@@ -32,6 +36,9 @@ REACTIONS = {"💩", "🔥", "👑", "😂", "👏"}
 SHARE_LEVELS = {"full", "stats", "private"}
 NUDGE_COOLDOWN_MS = 60 * 60 * 1000  # one nudge per friend per hour
 MAX_BODY = 512 * 1024
+
+# Set by make_server()
+CONFIG = {"invite_code": None, "auto_friends": False}
 MAX_PHOTO = 300 * 1024  # decoded JPEG bytes
 
 SCHEMA = """
@@ -155,6 +162,8 @@ def get_user(con, uid):
 
 
 def friend_ids(con, uid):
+    if CONFIG["auto_friends"]:
+        return {r["id"] for r in con.execute("SELECT id FROM users WHERE id != ?", (uid,))}
     rows = con.execute(
         "SELECT requester_id, addressee_id FROM friendships "
         "WHERE status = 'accepted' AND (requester_id = ? OR addressee_id = ?)", (uid, uid)).fetchall()
@@ -209,10 +218,14 @@ def i(body, key, lo=0, hi=100_000_000):
 # Each handler: (con, me_row_or_None, body, params, query) -> JSON-able
 
 def h_health(con, me, body, p, q):
-    return {"ok": True, "name": "Kakascalendar Squad Server", "humble": False}
+    return {"ok": True, "name": "Kakascalendar Squad Server", "humble": False,
+            "invite_required": bool(CONFIG["invite_code"]), "auto_friends": CONFIG["auto_friends"]}
 
 
 def h_register(con, me, body, p, q):
+    invite = CONFIG["invite_code"]
+    if invite and not hmac.compare_digest((s(body, "invite_code", "", 128) or "").encode(), invite.encode()):
+        raise ApiError(403, "This is a private server. Ask the owner for the app.")
     username = (s(body, "username", "") or "").strip().lower()
     password = s(body, "password", "", 128) or ""
     if not USERNAME_RE.match(username):
@@ -341,6 +354,8 @@ def h_friends(con, me, body, p, q):
 
 
 def h_request_friend(con, me, body, p, q):
+    if CONFIG["auto_friends"]:
+        raise ApiError(400, "Everyone on this server is already in your squad")
     mid = me["id"]
     name = (s(body, "username", "") or "").strip().lower().lstrip("@")
     other = con.execute("SELECT * FROM users WHERE username = ?", (name,)).fetchone()
@@ -380,6 +395,8 @@ def h_decline(con, me, body, p, q):
 
 
 def h_unfriend(con, me, body, p, q):
+    if CONFIG["auto_friends"]:
+        raise ApiError(400, "Everyone on this server is in your squad")
     con.execute("DELETE FROM friendships WHERE (requester_id = ? AND addressee_id = ?) "
                 "OR (requester_id = ? AND addressee_id = ?)", (me["id"], p[0], p[0], me["id"]))
     return {"ok": True}
@@ -547,15 +564,21 @@ def make_handler(store):
     return Handler
 
 
-def make_server(host="0.0.0.0", port=8000, db_path="kakas.db"):
+def make_server(host="0.0.0.0", port=8000, db_path="kakas.db", invite_code=None, auto_friends=False):
+    CONFIG["invite_code"] = invite_code or None
+    CONFIG["auto_friends"] = bool(auto_friends)
     return ThreadingHTTPServer((host, port), make_handler(Store(db_path)))
 
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", "8000"))
     db = os.environ.get("KAKAS_DB", "kakas.db")
-    srv = make_server(port=port, db_path=db)
-    print(f"💩 Kakascalendar Squad Server on http://0.0.0.0:{port}  (db: {db})")
+    invite = os.environ.get("KAKAS_INVITE_CODE", "").strip()
+    auto = os.environ.get("KAKAS_AUTO_FRIENDS", "") in ("1", "true", "yes")
+    host = os.environ.get("HOST", "0.0.0.0")
+    srv = make_server(host=host, port=port, db_path=db, invite_code=invite, auto_friends=auto)
+    print(f"💩 Kakascalendar Squad Server on http://{host}:{port}  (db: {db}, "
+          f"invite: {'on' if invite else 'off'}, auto-friends: {'on' if auto else 'off'})", flush=True)
     try:
         srv.serve_forever()
     except KeyboardInterrupt:

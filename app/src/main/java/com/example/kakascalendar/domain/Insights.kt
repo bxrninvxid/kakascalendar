@@ -67,6 +67,24 @@ fun insights(all: List<Entry>, today: LocalDate = LocalDate.now(), water: Map<Lo
         }
     }
 
+    // Wipes
+    val wiped = recent.filter { it.wipes > 0 }
+    if (wiped.size >= 3) {
+        val avg = wiped.map { it.wipes }.average()
+        when {
+            avg <= 2.0 -> out += Insight("👻", "Clean machine", "Averaging ${"%.1f".format(avg)} wipes. Textbook formation.", Tone.GOOD)
+            avg >= 7.0 -> out += Insight("🧻", "Paper heavy lately",
+                "Averaging ${"%.1f".format(avg)} wipes per session. More fiber usually means fewer wipes. A bidet doesn't hurt either.", Tone.WARN)
+        }
+    }
+
+    // Places
+    val placed = all.mapNotNull { Place.of(it.place) }
+    if (placed.size >= 5) {
+        val work = placed.count { it == Place.WORK } * 100 / placed.size
+        if (work >= 30) out += Insight("💼", "Getting paid for it", "$work% of your sessions happen at work. Efficient time management.")
+    }
+
     // Perfect run
     val lastFive = all.sortedByDescending { it.timestamp }.take(5)
     if (lastFive.size == 5 && lastFive.all { it.type == 4 }) {

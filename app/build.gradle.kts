@@ -14,8 +14,15 @@ android {
         applicationId = "com.example.kakascalendar"
         minSdk = 26
         targetSdk = 34
-        versionCode = 3
-        versionName = "2.1"
+        versionCode = 4
+        versionName = "2.2"
+
+        // ── Build flavor of the Squad ─────────────────────────────
+        // Leave empty for the public build (users type a server address).
+        // A private build bakes in its own server and invite code.
+        buildConfigField("String", "SERVER_URL", "\"\"")
+        buildConfigField("String", "INVITE_CODE", "\"\"")
+        buildConfigField("boolean", "AUTO_SQUAD", "false")
     }
     buildTypes {
         release {
@@ -27,7 +34,10 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions { jvmTarget = "17" }
-    buildFeatures { compose = true }
+    buildFeatures {
+        compose = true
+        buildConfig = true
+    }
 }
 
 dependencies {

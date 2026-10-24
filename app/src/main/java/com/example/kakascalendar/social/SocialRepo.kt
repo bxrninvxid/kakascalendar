@@ -54,7 +54,8 @@ class SocialRepo(private val prefs: PrefsRepo) {
         if (!url.startsWith("http://") && !url.startsWith("https://")) return "Server address must start with http:// or https://"
         return try {
             val api = Api(url, null)
-            val req = AuthReq(username.trim().lowercase(), password, displayName.ifBlank { null }, avatar)
+            val invite = com.example.kakascalendar.BuildConfig.INVITE_CODE.ifBlank { null }
+            val req = AuthReq(username.trim().lowercase(), password, displayName.ifBlank { null }, avatar, invite)
             val res = if (register) api.register(req) else api.login(req)
             prefs.setSession(url, res.token, res.user.username)
             // keep the server in sync with local privacy choice

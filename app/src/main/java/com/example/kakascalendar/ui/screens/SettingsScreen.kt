@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.sp
 import com.example.kakascalendar.Dash
 import com.example.kakascalendar.MainVm
 import com.example.kakascalendar.data.CUSTOM_ACCENT
+import com.example.kakascalendar.data.FIXED_SERVER
 import com.example.kakascalendar.data.HomeSection
 import com.example.kakascalendar.data.Prefs
 import com.example.kakascalendar.domain.AVATARS
@@ -296,7 +297,8 @@ fun SettingsScreen(vm: MainVm, prefs: Prefs, dash: Dash, onBack: () -> Unit) {
             item { SectionTitle("Squad server") }
             item {
                 GlassCard(padding = 4.dp) {
-                    SettingRow("🌐", "Server address", prefs.serverUrl) { editServer = true }
+                    if (FIXED_SERVER == null) SettingRow("🌐", "Server address", prefs.serverUrl) { editServer = true }
+                    else SettingRow("🔐", "Private server", FIXED_SERVER.removePrefix("https://")) {}
                     if (prefs.signedIn) SettingRow("🚪", "Sign out", "@${prefs.username}") { vm.signOut() }
                 }
             }
@@ -327,7 +329,7 @@ fun SettingsScreen(vm: MainVm, prefs: Prefs, dash: Dash, onBack: () -> Unit) {
             item {
                 Column(Modifier.fillMaxWidth().padding(top = 12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                     Text("💩", fontSize = 40.sp)
-                    Text("Kakascalendar 2.1", style = MaterialTheme.typography.titleMedium)
+                    Text("Kakascalendar 2.2", style = MaterialTheme.typography.titleMedium)
                     Text("Stronger. Smarter. Better.", color = cs.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
                 }
             }

@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.kakascalendar.MainVm
+import com.example.kakascalendar.data.FIXED_SERVER
 import com.example.kakascalendar.data.Prefs
 import com.example.kakascalendar.domain.REACTIONS
 import com.example.kakascalendar.domain.StoolType
@@ -41,6 +42,8 @@ import com.example.kakascalendar.social.SocialState
 import com.example.kakascalendar.social.UserDto
 import com.example.kakascalendar.ui.components.*
 import kotlinx.coroutines.delay
+
+private val AUTO_SQUAD = com.example.kakascalendar.BuildConfig.AUTO_SQUAD
 
 @Composable
 fun SquadScreen(vm: MainVm, prefs: Prefs) {
@@ -128,7 +131,7 @@ private fun SignInScreen(vm: MainVm, prefs: Prefs) {
                     supportingText = { if (register) Text("At least 6 characters") },
                     modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)
                 )
-                OutlinedTextField(
+                if (FIXED_SERVER == null) OutlinedTextField(
                     server, { server = it.trim() }, label = { Text("Squad server") }, singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
                     supportingText = { Text("Emulator → http://10.0.2.2:8000 · Phone → http://<your PC's IP>:8000") },
@@ -143,11 +146,11 @@ private fun SignInScreen(vm: MainVm, prefs: Prefs) {
                     Modifier.fillMaxWidth(), enabled = !busy && username.length >= 3 && password.isNotEmpty()
                 ) {
                     busy = true; error = null
-                    vm.authenticate(server, username, password, register) { err -> busy = false; error = err }
+                    vm.authenticate(FIXED_SERVER ?: server, username, password, register) { err -> busy = false; error = err }
                 }
             }
         }
-        item {
+        if (FIXED_SERVER == null) item {
             Text(
                 "Need a server? It's one Python file in the repo's server/ folder. Run: python3 server.py",
                 style = MaterialTheme.typography.bodySmall, color = cs.onSurfaceVariant, textAlign = TextAlign.Center,
@@ -357,6 +360,10 @@ private fun FriendsSection(vm: MainVm, state: SocialState, prefs: Prefs) {
                             Icon(Icons.Rounded.ContentCopy, "Copy")
                         }
                     }
+                    if (AUTO_SQUAD) {
+                        Text("Everyone on this server is automatically in your squad. Invite friends by sending them the app.",
+                            style = MaterialTheme.typography.bodySmall, color = cs.onSurfaceVariant)
+                    } else {
                     Text("Share it so friends can add you.", style = MaterialTheme.typography.bodySmall, color = cs.onSurfaceVariant)
                     Spacer(Modifier.height(12.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -370,6 +377,7 @@ private fun FriendsSection(vm: MainVm, state: SocialState, prefs: Prefs) {
                             modifier = Modifier.size(52.dp)) {
                             Icon(Icons.Rounded.PersonAdd, "Add friend")
                         }
+                    }
                     }
                 }
             }
@@ -392,14 +400,15 @@ private fun FriendsSection(vm: MainVm, state: SocialState, prefs: Prefs) {
             }
             item { SectionTitle("Squad · ${state.friends.friends.size}") }
             if (state.loaded && state.friends.friends.isEmpty()) item {
-                EmptyState("🫂", "No friends yet", "Add someone by username. Greatness is better with witnesses.")
+                if (AUTO_SQUAD) EmptyState("🫂", "Just you so far", "Send the app to your friends. Everyone who joins shows up here.")
+                else EmptyState("🫂", "No friends yet", "Add someone by username. Greatness is better with witnesses.")
             }
             items(state.friends.friends, key = { "f${it.id}" }) { f ->
-                PersonRow(f, "🔥 ${f.currentStreak}d streak · Lv ${f.level}", onLongClick = { confirmRemove = f }) {
+                PersonRow(f, "🔥 ${f.currentStreak}d streak · Lv ${f.level}", onLongClick = if (AUTO_SQUAD) null else ({ confirmRemove = f })) {
                     FilledTonalButton(onClick = { vm.nudge(f.id, f.displayName) }) { Text("👉 Nudge") }
                 }
             }
-            if (state.friends.friends.isNotEmpty()) item {
+            if (state.friends.friends.isNotEmpty() && !AUTO_SQUAD) item {
                 Text("Tip: tap a friend's name to remove them.", style = MaterialTheme.typography.labelSmall,
                     color = cs.onSurfaceVariant, modifier = Modifier.padding(start = 6.dp))
             }

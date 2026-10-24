@@ -108,6 +108,31 @@ fun StatsScreen(dash: Dash) {
             }
         }
         item {
+            val places = placeCounts(e)
+            val wipesAvg = avgWipes(e)
+            GlassCard {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("Throne map", style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+                    Text(if (wipesAvg == 0.0) "🧻 –" else "🧻 %.1f avg wipes".format(wipesAvg),
+                        style = MaterialTheme.typography.labelLarge, color = cs.onSurfaceVariant)
+                }
+                Spacer(Modifier.height(10.dp))
+                if (places.isEmpty()) {
+                    Text("Pick a place when logging to see where you rule.", style = MaterialTheme.typography.bodySmall,
+                        color = cs.onSurfaceVariant)
+                }
+                val maxP = places.maxOfOrNull { it.second } ?: 1
+                places.forEach { (pl, n) ->
+                    Row(Modifier.padding(vertical = 3.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Text("${pl.emoji} ${pl.label}", style = MaterialTheme.typography.bodySmall, modifier = Modifier.width(96.dp), maxLines = 1)
+                        Box(Modifier.weight(1f)) { SlimProgress(n.toFloat() / maxP, height = 10.dp) }
+                        Text("$n", style = MaterialTheme.typography.labelMedium, modifier = Modifier.width(36.dp),
+                            textAlign = androidx.compose.ui.text.style.TextAlign.End)
+                    }
+                }
+            }
+        }
+        item {
             GlassCard {
                 Text("Time of day", style = MaterialTheme.typography.titleMedium)
                 Text("When nature calls", style = MaterialTheme.typography.bodySmall, color = cs.onSurfaceVariant)

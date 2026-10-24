@@ -22,6 +22,9 @@ private val Context.dataStore by preferencesDataStore("settings")
 /** Default server: 10.0.2.2 is "your computer" as seen from the Android emulator. */
 const val DEFAULT_SERVER = "http://10.0.2.2:8000"
 
+/** Private builds bake in their server; then the address can't be changed in the app. */
+val FIXED_SERVER: String? = com.example.kakascalendar.BuildConfig.SERVER_URL.ifBlank { null }
+
 /** Index of the "Custom" accent (uses [Prefs.customHue]). */
 const val CUSTOM_ACCENT = 6
 
@@ -131,7 +134,7 @@ class PrefsRepo(private val ctx: Context) {
                 reminderHour = p[K.reminderHour] ?: 20,
                 reminderMinute = p[K.reminderMinute] ?: 0,
                 lock = p[K.lock] ?: false,
-                serverUrl = p[K.server] ?: DEFAULT_SERVER,
+                serverUrl = FIXED_SERVER ?: p[K.server] ?: DEFAULT_SERVER,
                 token = p[K.token],
                 username = p[K.username],
                 shareLevel = p[K.share] ?: "stats",

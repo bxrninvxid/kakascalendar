@@ -46,6 +46,8 @@ fun AddEntrySheet(initial: Entry?, customTags: List<String>, prefillDuration: In
     var time by remember { mutableStateOf(start.toLocalTime()) }
     var rating by remember { mutableIntStateOf(initial?.rating ?: 0) }
     var duration by remember { mutableIntStateOf(initial?.durationSec ?: prefillDuration) }
+    var wipes by remember { mutableIntStateOf(initial?.wipes ?: 0) }
+    var place by remember { mutableStateOf(initial?.place ?: "") }
     val tagOptions = remember(customTags, initial) {
         val base = allTags(customTags)
         base + (initial?.tagList().orEmpty().filter { it !in base })
@@ -137,6 +139,34 @@ fun AddEntrySheet(initial: Entry?, customTags: List<String>, prefillDuration: In
             }
 
             // Tags
+            FieldLabel("Where?")
+            Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Place.entries.forEach { pl ->
+                    FilterChip(
+                        selected = place == pl.key,
+                        onClick = { place = if (place == pl.key) "" else pl.key },
+                        label = { Text("${pl.emoji} ${pl.label}") }
+                    )
+                }
+            }
+
+            FieldLabel("Wipe count")
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                FilledTonalIconButton(onClick = { wipes = (wipes - 1).coerceAtLeast(0) }, enabled = wipes > 0) {
+                    Text("−", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                }
+                Text(
+                    if (wipes == 0) "🧻 –" else "🧻 $wipes", fontSize = 22.sp, fontWeight = FontWeight.Black,
+                    modifier = Modifier.padding(horizontal = 14.dp)
+                )
+                FilledTonalIconButton(onClick = { wipes = (wipes + 1).coerceAtMost(99) }) {
+                    Text("+", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                }
+                Spacer(Modifier.width(12.dp))
+                Text(if (wipes == 0) "Not counted" else wipeLabel(wipes), style = MaterialTheme.typography.bodyMedium,
+                    color = cs.onSurfaceVariant)
+            }
+
             FieldLabel("Tags")
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 tagOptions.forEach { tg ->
@@ -165,7 +195,9 @@ fun AddEntrySheet(initial: Entry?, customTags: List<String>, prefillDuration: In
                         comment = comment.trim(),
                         tags = tagOptions.filter { it in tags }.joinToString(","),
                         durationSec = duration,
-                        rating = rating
+                        rating = rating,
+                        wipes = wipes,
+                        place = place
                     )
                 )
             }

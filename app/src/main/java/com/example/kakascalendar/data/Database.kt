@@ -24,7 +24,9 @@ data class Entry(
     val comment: String = "",
     val tags: String = "",                               // comma-separated
     @ColumnInfo(name = "duration_sec") val durationSec: Int = 0,
-    val rating: Int = 0                                  // 0 = not rated, 1..5
+    val rating: Int = 0,                                 // 0 = not rated, 1..5
+    val wipes: Int = 0,                                  // 0 = not counted
+    val place: String = ""                               // Place.key, "" = not set
 )
 
 @Dao
@@ -85,7 +87,14 @@ private val MIGRATION_3_4 = object : Migration(3, 4) {
     }
 }
 
-@Database(entities = [Entry::class, WaterDay::class], version = 4, exportSchema = false)
+private val MIGRATION_4_5 = object : Migration(4, 5) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE entries ADD COLUMN wipes INTEGER NOT NULL DEFAULT 0")
+        db.execSQL("ALTER TABLE entries ADD COLUMN place TEXT NOT NULL DEFAULT ''")
+    }
+}
+
+@Database(entities = [Entry::class, WaterDay::class], version = 5, exportSchema = false)
 abstract class AppDb : RoomDatabase() {
     abstract fun dao(): EntryDao
     abstract fun water(): WaterDao
@@ -95,7 +104,7 @@ abstract class AppDb : RoomDatabase() {
 
         fun get(context: Context): AppDb = instance ?: synchronized(this) {
             instance ?: Room.databaseBuilder(context.applicationContext, AppDb::class.java, "kakascalendar.db")
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
                 .build().also { instance = it }
         }
     }

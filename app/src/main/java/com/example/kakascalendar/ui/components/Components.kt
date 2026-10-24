@@ -318,6 +318,8 @@ fun EntryCard(e: Entry, onClick: (Entry) -> Unit, onDelete: (Entry) -> Unit) {
                 val meta = buildString {
                     append(e.dateTime().format(fmt))
                     if (e.durationSec > 0) append(" · ⏱ ${formatDuration(e.durationSec)}")
+                    if (e.wipes > 0) append(" · 🧻 ${e.wipes}")
+                    Place.of(e.place)?.let { append(" · ${it.emoji} ${it.label}") }
                 }
                 Text(meta, style = MaterialTheme.typography.bodySmall, color = cs.onSurfaceVariant)
                 val tags = e.tagList()

@@ -30,10 +30,39 @@ enum class StoolType(val n: Int, val emoji: String, val label: String, val desc:
 }
 
 const val COFFEE = "☕ Coffee"
+const val SHOWER = "🚿 Shower after"
+const val BIDET = "💦 Bidet"
+const val CLOG = "🪠 Clogged"
 val TAGS = listOf(
     "😌 Easy", "😣 Strained", "⚡ Urgent", "📖 Long sit", "📱 Phone",
-    "🌶️ Spicy", COFFEE, "🍺 Night out", "💊 Meds", "✈️ Travel"
+    "🌶️ Spicy", COFFEE, "🍺 Night out", "💊 Meds",
+    SHOWER, BIDET, "💨 Gassy", "🔇 Silent", "🌋 Eruption", CLOG, "🧘 Zen"
 )
+
+/** Where it happened. */
+enum class Place(val key: String, val emoji: String, val label: String) {
+    HOME("home", "🏠", "Home"),
+    WORK("work", "🏢", "Work"),
+    SCHOOL("school", "🎓", "School"),
+    FRIEND("friend", "🛋️", "Friend's"),
+    PUBLIC("public", "🚻", "Public"),
+    NATURE("nature", "🌲", "Nature"),
+    TRAVEL("travel", "✈️", "Travel");
+
+    companion object {
+        fun of(key: String) = entries.firstOrNull { it.key == key }
+    }
+}
+
+/** Wipe counter labels (0 = not counted). */
+fun wipeLabel(n: Int): String = when {
+    n <= 0 -> "–"
+    n == 1 -> "Ghost wipe 👻"
+    n <= 3 -> "Clean finish"
+    n <= 6 -> "Standard"
+    n <= 9 -> "Paper heavy"
+    else -> "Call for backup 🧻"
+}
 fun allTags(custom: List<String>): List<String> = TAGS + custom.filter { it !in TAGS }
 
 fun timeFormatter(use24h: Boolean): DateTimeFormatter =
@@ -178,6 +207,12 @@ fun avgDuration(e: List<Entry>): Int = e.filter { it.durationSec > 0 }.map { it.
 fun avgRating(e: List<Entry>): Double = e.filter { it.rating > 0 }.map { it.rating }.average()
     .let { if (it.isNaN()) 0.0 else it }
 
+fun avgWipes(e: List<Entry>): Double = e.filter { it.wipes > 0 }.map { it.wipes }.average()
+    .let { if (it.isNaN()) 0.0 else it }
+
+fun placeCounts(e: List<Entry>): List<Pair<Place, Int>> =
+    e.mapNotNull { Place.of(it.place) }.groupingBy { it }.eachCount().toList().sortedByDescending { it.second }
+
 fun heatCounts(e: List<Entry>): Map<LocalDate, Int> = e.groupingBy { it.date() }.eachCount()
 
 fun toCsv(e: List<Entry>): String {
@@ -185,12 +220,12 @@ fun toCsv(e: List<Entry>): String {
     val d = DateTimeFormatter.ofPattern("yyyy-MM-dd")
     val t = DateTimeFormatter.ofPattern("HH:mm")
     return buildString {
-        appendLine("date,time,type,type_name,rating,duration_sec,tags,comment")
+        appendLine("date,time,type,type_name,rating,duration_sec,wipes,place,tags,comment")
         e.sortedBy { it.timestamp }.forEach {
             val dt = it.dateTime()
             appendLine(
                 "${dt.format(d)},${dt.format(t)},${it.type},${q(it.stool().label)},${it.rating}," +
-                    "${it.durationSec},${q(it.tagList().joinToString("; "))},${q(it.comment)}"
+                    "${it.durationSec},${it.wipes},${q(Place.of(it.place)?.label ?: "")},${q(it.tagList().joinToString("; "))},${q(it.comment)}"
             )
         }
     }
@@ -205,14 +240,17 @@ data class BackupEntry(
     val comment: String = "",
     val tags: String = "",
     val durationSec: Int = 0,
-    val rating: Int = 0
+    val rating: Int = 0,
+    val wipes: Int = 0,
+    val place: String = ""
 )
 
 @Serializable
-data class Backup(val app: String = "Kakascalendar", val version: Int = 2, val entries: List<BackupEntry>)
+data class Backup(val app: String = "Kakascalendar", val version: Int = 3, val entries: List<BackupEntry>)
 
-fun Entry.toBackup() = BackupEntry(timestamp, type, comment, tags, durationSec, rating)
+fun Entry.toBackup() = BackupEntry(timestamp, type, comment, tags, durationSec, rating, wipes, place)
 fun BackupEntry.toEntry() = Entry(
     timestamp = timestamp, type = type.coerceIn(1, 7), comment = comment, tags = tags,
-    durationSec = durationSec.coerceAtLeast(0), rating = rating.coerceIn(0, 5)
+    durationSec = durationSec.coerceAtLeast(0), rating = rating.coerceIn(0, 5),
+    wipes = wipes.coerceIn(0, 99), place = place.take(16)
 )

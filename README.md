@@ -38,6 +38,9 @@ Version 1 was perfect. Version 2 is *more* perfect. Science can't explain it.
 | 💾 | **Backup & restore** | One JSON file holds your entire legacy. |
 | ⚡ | **Quick log** | One tap. Perfect Type 4. Done. |
 | ✏️ | **Edit entries** | Tap any entry to fix it. History is written by the winners. |
+| 🧻 | **Wipe counter** *(2.2)* | From *Ghost wipe 👻* to *Call for backup*. Science demands data. |
+| 🗺️ | **Throne map** *(2.2)* | Home, work, nature… see where you rule. *Paid to Poop* trophy included. |
+| 🚿 | **Shower, bidet & more tags** *(2.2)* | Plus custom tags, photo avatars, water tracking and a brag card. |
 
 Plus everything from 1.0: Bristol scale tracking, tags, comments, backdating, calendar, streaks, CSV export, undo delete and dark mode.
 
@@ -97,6 +100,26 @@ cd server && docker compose up -d     # data persists in a volume
 **Going public:** put it on any small VPS or a free-tier host (Fly.io, Render, Railway…) behind HTTPS. On a VPS, [Caddy](https://caddyserver.com) gives you automatic HTTPS with one line: `squad.yourdomain.com { reverse_proxy localhost:8000 }`.
 
 **Tests:** `cd server && python3 -m unittest test_server.py`
+
+### 🔐 Private squad on your own box (with a Cloudflare Tunnel)
+
+No public IP? No problem. On any Debian/Ubuntu machine or Proxmox LXC:
+
+```bash
+curl -fsSLO https://raw.githubusercontent.com/bxrninvxid/kakascalendar/main/server/setup-lxc.sh
+bash setup-lxc.sh server --private          # systemd service + invite code + everyone-is-friends
+bash setup-lxc.sh tunnel squad.yourdomain.com   # Cloudflare Tunnel, HTTPS for free
+```
+
+Then bake it into your own build in `app/build.gradle.kts`:
+
+```kotlin
+buildConfigField("String", "SERVER_URL", "\"https://squad.yourdomain.com\"")
+buildConfigField("String", "INVITE_CODE", "\"<code from setup-lxc.sh status>\"")
+buildConfigField("boolean", "AUTO_SQUAD", "true")
+```
+
+The server field disappears from the app, signups need the invite code, and everyone on your server is automatically in the squad.
 
 <details>
 <summary>📡 API cheat sheet</summary>
