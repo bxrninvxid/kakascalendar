@@ -233,7 +233,10 @@ class MainVm(app: Application) : AndroidViewModel(app) {
             prefsRepo.setAvatarPhoto(path)
             msg("📸 Looking good")
             social.syncPhoto(upload)?.let { msg("Saved locally, but Squad upload failed: $it") }
-        }.onFailure { msg("Couldn't read that image. Try another one.") }
+        }.onFailure {
+            android.util.Log.e("KakasPhoto", "avatar failed", it)
+            msg("Couldn't read that image (${it.javaClass.simpleName}: ${it.message}).")
+        }
     }
 
     fun removeAvatarPhoto() = viewModelScope.launch {
@@ -385,7 +388,8 @@ class MainVm(app: Application) : AndroidViewModel(app) {
 
     fun postPhotoStory(uri: Uri, caption: String, onDone: (Boolean) -> Unit) = viewModelScope.launch {
         val b64 = withContext(Dispatchers.IO) {
-            runCatching { Photos.loadScaled(getApplication(), uri)?.let { bmp -> Photos.storyBase64(bmp).also { bmp.recycle() } } }.getOrNull()
+            runCatching { Photos.loadScaled(getApplication(), uri)?.let { bmp -> Photos.storyBase64(bmp).also { bmp.recycle() } } }
+                .onFailure { android.util.Log.e("KakasPhoto", "story failed", it) }.getOrNull()
         }
         if (b64 == null) { msg("Couldn't read that image. Try another one."); onDone(false); return@launch }
         val err = social.postStory(PostStoryReq(kind = "photo", text = caption.trim(), image = b64))

@@ -8,6 +8,7 @@ import android.graphics.Matrix
 import android.net.Uri
 import android.os.Build
 import android.util.Base64
+import android.util.Log
 import androidx.exifinterface.media.ExifInterface
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
@@ -21,7 +22,10 @@ object Photos {
 
     /** Reads the whole picked file once (some providers only allow one read). */
     private fun readBytes(ctx: Context, uri: Uri): ByteArray? =
-        runCatching { ctx.contentResolver.openInputStream(uri)?.use { it.readBytes() } }.getOrNull()
+        runCatching { ctx.contentResolver.openInputStream(uri)?.use { it.readBytes() } }
+            .onFailure { Log.e("KakasPhoto", "open failed for $uri", it) }
+            .getOrNull()
+            .also { Log.i("KakasPhoto", "read ${it?.size} bytes from $uri") }
 
     private fun exifRotation(bytes: ByteArray): Float = runCatching {
         when (ExifInterface(ByteArrayInputStream(bytes)).getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)) {
@@ -41,6 +45,7 @@ object Photos {
         // inJustDecodeBounds only fills in the size; decodeByteArray returns null by design here.
         val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
         BitmapFactory.decodeByteArray(bytes, 0, bytes.size, bounds)
+        Log.i("KakasPhoto", "bounds ${bounds.outWidth}x${bounds.outHeight} mime=${bounds.outMimeType}")
         if (bounds.outWidth > 0 && bounds.outHeight > 0) {
             val side = if (shortSide) min(bounds.outWidth, bounds.outHeight) else max(bounds.outWidth, bounds.outHeight)
             var sample = 1
@@ -67,7 +72,7 @@ object Photos {
                         decoder.setTargetSize((w * f).toInt().coerceAtLeast(1), (h * f).toInt().coerceAtLeast(1))
                     }
                 }
-            }.getOrNull()
+            }.onFailure { Log.e("KakasPhoto", "ImageDecoder failed", it) }.getOrNull()
         }
         return null
     }
