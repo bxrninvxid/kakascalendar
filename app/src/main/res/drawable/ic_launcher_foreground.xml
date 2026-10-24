@@ -1,0 +1,24 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <!-- tip -->
+    <path android:fillColor="#7A4528"
+        android:pathData="M54,27 C58,31 62,34 61,39 L47,39 C47,34 51,32 54,27 Z" />
+    <!-- top tier -->
+    <path android:fillColor="#8B5232"
+        android:pathData="M40,45 a14,8 0 1,0 28,0 a14,8 0 1,0 -28,0 Z" />
+    <!-- middle tier -->
+    <path android:fillColor="#9A5B34"
+        android:pathData="M33,57 a21,10 0 1,0 42,0 a21,10 0 1,0 -42,0 Z" />
+    <!-- base tier -->
+    <path android:fillColor="#A9673E"
+        android:pathData="M27,71 a27,11 0 1,0 54,0 a27,11 0 1,0 -54,0 Z" />
+    <!-- eyes -->
+    <path android:fillColor="#FFFFFF" android:pathData="M42,57 a5,5 0 1,0 10,0 a5,5 0 1,0 -10,0 Z" />
+    <path android:fillColor="#FFFFFF" android:pathData="M56,57 a5,5 0 1,0 10,0 a5,5 0 1,0 -10,0 Z" />
+    <path android:fillColor="#2B1A12" android:pathData="M45,57.5 a2.5,2.5 0 1,0 5,0 a2.5,2.5 0 1,0 -5,0 Z" />
+    <path android:fillColor="#2B1A12" android:pathData="M59,57.5 a2.5,2.5 0 1,0 5,0 a2.5,2.5 0 1,0 -5,0 Z" />
+    <!-- smile -->
+    <path android:fillColor="#00000000" android:strokeColor="#2B1A12" android:strokeWidth="2.6"
+        android:strokeLineCap="round" android:pathData="M45,69 Q54,76 63,69" />
+</vector>

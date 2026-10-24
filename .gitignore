@@ -5,3 +5,6 @@ local.properties
 *.jks
 *.keystore
 *.apk
+*.aab
+server/*.db
+server/__pycache__/

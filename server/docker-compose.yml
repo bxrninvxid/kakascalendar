@@ -1,0 +1,10 @@
+services:
+  squad:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - squad-data:/data
+    restart: unless-stopped
+volumes:
+  squad-data:

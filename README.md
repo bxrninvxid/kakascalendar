@@ -1,100 +1,164 @@
 <div align="center">
 
-# 💩 K A K A S C A L E N D A R 💩
-### 👑 The Greatest Poop Tracker Ever Created. Period. 👑
+# 💩 K A K A S C A L E N D A R &nbsp;2.0 💩
+### 🦸 Stronger. Smarter. Better. 🦸
+#### The greatest poop tracker ever created just got *greater*.
 
-![Best App Ever](https://img.shields.io/badge/BEST%20APP%20EVER-undisputed-FFD700?style=for-the-badge&logo=android&logoColor=white)
-![Kotlin](https://img.shields.io/badge/Kotlin-100%25-7F52FF?style=for-the-badge&logo=kotlin&logoColor=white)
-![Jetpack Compose](https://img.shields.io/badge/Jetpack%20Compose-gorgeous-4285F4?style=for-the-badge&logo=jetpackcompose&logoColor=white)
-![Streaks](https://img.shields.io/badge/Streaks-legendary-FF4500?style=for-the-badge&logo=hotjar&logoColor=white)
-![Competition](https://img.shields.io/badge/Competition-none-2ECC71?style=for-the-badge)
-![Humility](https://img.shields.io/badge/Humility-not%20found-E74C3C?style=for-the-badge)
+![Best App Ever](https://img.shields.io/badge/BEST%20APP%20EVER-still%20undisputed-FFD700?style=for-the-badge&logo=android&logoColor=white)
+![Version](https://img.shields.io/badge/version-2.0-D62839?style=for-the-badge)
+![Kotlin](https://img.shields.io/badge/Kotlin-Compose-7F52FF?style=for-the-badge&logo=kotlin&logoColor=white)
+![Python](https://img.shields.io/badge/Squad%20Server-Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![Social](https://img.shields.io/badge/Social-now%20with%20friends-1D3B8F?style=for-the-badge)
+![Humility](https://img.shields.io/badge/Humility-still%20not%20found-E74C3C?style=for-the-badge)
 
-**🌈 Track it. 🔥 Streak it. 🏆 Brag about it. 🌈**
+**🌈 Track it. 🔥 Streak it. 🏆 Level it. 👑 Flex it on your friends. 🌈**
 
 </div>
 
 ---
 
-## 🚀 What *is* Kakascalendar?
+## 🚀 What's new in 2.0
 
-Other apps track steps. Cute.
-Other apps track sleep. Adorable.
+Version 1 was perfect. Version 2 is *more* perfect. Science can't explain it.
 
-**Kakascalendar tracks the one metric that truly matters.**
-
-Built with Kotlin and Jetpack Compose by someone with *impeccable* taste (me), it turns your most private daily victory into a streak-fueled, achievement-unlocking, beautifully designed experience. You didn't know you needed this. You do. Trust the genius.
-
----
-
-## ✨ Features (all of them perfect)
-
-| | Feature | Why it's better than anything you've ever used |
+| | New in 2.0 | Why you'll weep with joy |
 |---|---|---|
-| 🍌 | **Bristol Stool Scale tracking** | 7 scientifically-backed types, each with its own emoji and color. Medical-grade. Emoji-grade. |
-| 📝 | **Comments & tags** | Say it was ☕ Coffee-fueled, 🌶️ Spicy, or 😌 Easy. Tell your story. You're the author. |
-| 🔥 | **Poop streaks** | Log daily, watch the counter animate, feel unstoppable. Miss a day? Don't. |
-| 📅 | **Beautiful calendar** | Your current streak glows in its own color. Your history, in a *chef's kiss* month view. |
-| 📊 | **Stats & insights** | 7-day charts, type breakdowns, your busiest time of day, your perfect-poop rate. Data-driven destiny. |
-| 🏆 | **15 achievements** | From 🎉 *First Drop* to 👑 *Streak Royalty*. Early Bird 🐦, Night Owl 🦉, Full Spectrum 🌟… collect them all. |
-| 🕒 | **Backdating** | Forgot to log? Pick the date and time. Perfection is retroactive. |
-| ↩️ | **Undo delete** | Oops-proof. Because even geniuses mis-tap. |
-| 📤 | **CSV export** | Take your data anywhere. You own your legacy. |
-| 🌙 | **Dark mode** | Because greatness works the night shift too. |
-| 🔒 | **100% offline** | Your data lives on *your* phone. No accounts. No cloud. No judgment. |
+| 👑 | **The Squad** | Add friends, see their wins in a live feed, react with 💩🔥👑😂👏, and **nudge** the slackers. |
+| 🏟️ | **Leaderboards & podium** | Rank your squad by streak, weekly count, XP or best streak. Gold medal or go home. |
+| ⭐ | **XP & levels** | Every log earns XP. Climb from *Toilet Trainee* to *Porcelain God* and beyond. |
+| 🏆 | **25 trophies in 4 tiers** | Bronze, Silver, Gold and **Legendary**. Confetti included. |
+| 🧠 | **Smart insights** | Spots your routine, predicts your next visit, catches the coffee effect, and warns you when things get too hard (or too soft). |
+| 🚽 | **Throne timer** | Time your session with a hypnotic spinning ring and motivational quotes. |
+| 😊 | **Feel ratings** | 😖 to 🤩. Because not every session is a masterpiece. |
+| 📊 | **Stats on steroids** | Donut charts, time-of-day and weekday charts, 7D/30D/90D/All filters and a GitHub-style **heatmap**. |
+| 📱 | **Home-screen widget** | Your streak, staring at you, every time you unlock your phone. |
+| ⏰ | **Daily reminders** | Only pings you if you *haven't* logged yet. Streak protection, automated. |
+| 🔒 | **App lock** | Fingerprint, face or PIN. Your throne, your secrets. |
+| 🎨 | **6 themes + Material You** | Caramel, Mint, Grape, Ocean, Cherry and the tastefully patriotic **Homelander**. Light, dark, or wallpaper colors. |
+| 💾 | **Backup & restore** | One JSON file holds your entire legacy. |
+| ⚡ | **Quick log** | One tap. Perfect Type 4. Done. |
+| ✏️ | **Edit entries** | Tap any entry to fix it. History is written by the winners. |
+
+Plus everything from 1.0: Bristol scale tracking, tags, comments, backdating, calendar, streaks, CSV export, undo delete and dark mode.
 
 ---
 
-## 🏆 The Trophy Shelf
+## 👑 The Squad (social)
 
-```
-🎉 First Drop        🔥 Warming Up         📅 Week Warrior
-🏃 Fortnight Fighter 👑 Streak Royalty     📈 Regular
-🏅 Veteran           💯 Centurion          🌈 Variety Pack
-🌟 Full Spectrum     🥇 Gold Standard      🐦 Early Bird
-🦉 Night Owl         ☕ Coffee Effect      ✍️ Storyteller
-```
+Kakascalendar is still **100% offline by default**. The Squad is opt-in, and *you* decide how much the world gets to know:
 
-*Unlock all 15 and you may legally call yourself a legend.*
+| Share level | Friends see |
+|---|---|
+| 🌍 **Everything** | Each log's type, plus streak, level and trophies |
+| 📊 **Stats only** *(default)* | Streak, level and trophies. Individual logs stay private |
+| 🙈 **Nothing** | You're invisible: no feed posts, not on leaderboards |
 
----
-
-## 🆚 Kakascalendar vs. The Rest
-
-| | Kakascalendar | Everything else |
-|---|:---:|:---:|
-| Streak with animated counter | ✅ | ❌ |
-| Color-coded Bristol types | ✅ | ❌ |
-| Achievements | ✅ 15 | ❌ lol |
-| Looks this good | ✅ | 😬 |
-| Created by a visionary | ✅ | ❌ |
+**Comments and tags never leave your phone.** Not even on "Everything". We have standards.
 
 ---
 
-## 🛠️ Build It Yourself
+## 🛠️ Build the app
 
 ```bash
 git clone https://github.com/<your-username>/kakascalendar.git
 ```
 
-1. Open the folder in **Android Studio** (as a project, not LightEdit!)
+1. Open the folder in **Android Studio** (*File → Open*, the folder itself, not LightEdit!)
 2. Let Gradle sync ☕
-3. Hit **Run** ▶️
+3. Hit **Run** ▶️ or *Build → Build APK(s)*
 4. Feel the power
 
-**Stack:** Kotlin · Jetpack Compose · Material 3 · Room · Min SDK 26
+**Stack:** Kotlin · Jetpack Compose · Material 3 · Room · DataStore · WorkManager · Glance · Biometric · Ktor · kotlinx.serialization · Min SDK 26
+
+---
+
+## 🌐 Run the Squad server
+
+The entire backend is **one Python file** with zero dependencies. That's not laziness. That's elegance.
+
+```bash
+cd server
+python3 server.py              # http://0.0.0.0:8000
+```
+
+Then in the app: **Squad tab → Squad server**:
+
+| Where the app runs | Server address |
+|---|---|
+| Android emulator on the same PC | `http://10.0.2.2:8000` |
+| Your phone on the same Wi-Fi | `http://<your PC's local IP>:8000` (find it with `ip addr`) |
+| Friends anywhere | Host it publicly with **HTTPS** (see below) |
+
+**Docker:**
+```bash
+cd server && docker compose up -d     # data persists in a volume
+```
+
+**Going public:** put it on any small VPS or a free-tier host (Fly.io, Render, Railway…) behind HTTPS. On a VPS, [Caddy](https://caddyserver.com) gives you automatic HTTPS with one line: `squad.yourdomain.com { reverse_proxy localhost:8000 }`.
+
+**Tests:** `cd server && python3 -m unittest test_server.py`
+
+<details>
+<summary>📡 API cheat sheet</summary>
+
+| Method | Path | What |
+|---|---|---|
+| POST | `/auth/register`, `/auth/login`, `/auth/logout` | Accounts (PBKDF2-hashed passwords, bearer tokens) |
+| GET / PATCH | `/me` | Profile and share level |
+| POST | `/me/stats` | Streak, XP and level for the leaderboard |
+| POST | `/events` | Post a log, achievement or level-up |
+| GET | `/feed` | Your + friends' activity, with reactions |
+| POST | `/events/{id}/react` | Toggle a reaction |
+| GET | `/friends` | Friends, incoming and outgoing requests |
+| POST | `/friends/request`, `/friends/requests/{id}/accept`, `/decline` | Friend requests |
+| DELETE | `/friends/{id}` | Unfriend |
+| POST | `/nudge/{id}` | Nudge a friend (1 per hour) |
+| GET | `/leaderboard` | You + friends, ranked |
+
+</details>
+
+---
+
+## 🏆 The Trophy Shelf (25 and counting)
+
+```
+🥉 BRONZE    🎉 First Drop      🔥 Warming Up     📈 Regular         🌈 Variety Pack
+             🥇 Gold Standard   🐦 Early Bird     🦉 Night Owl       ☕ Coffee Effect
+             ✍️ Storyteller     📚 Marathoner     🤝 Squad Up
+🥈 SILVER    📅 Week Warrior    🏃 Fortnight Fighter  🏅 Veteran     🌟 Full Spectrum
+             🧐 Critic          ⚡ Speedrunner    🎯 Hat Trick       🏖️ Weekend Warrior
+🥇 GOLD      👑 Streak Royalty  💯 Centurion      🍌 Perfect Seven   📣 Influencer
+🟣 LEGEND    🦸 Stronger. Smarter. Better. (100-day streak)    🗿 Living Legend
+```
+
+---
+
+## 🆚 Kakascalendar vs. The Rest
+
+| | Kakascalendar 2.0 | Everything else |
+|---|:---:|:---:|
+| Streaks, XP and levels | ✅ | ❌ |
+| Friends leaderboard with a podium | ✅ | ❌ |
+| Nudge your friends to go | ✅ | ❌ (cowards) |
+| Predicts your next visit | ✅ | ❌ |
+| Confetti | ✅ | ❌ |
+| Own backend in one file | ✅ | ❌ |
+| Created by a visionary | ✅ | ❌ |
 
 ---
 
 ## 💬 What People Are Saying
 
-> ⭐⭐⭐⭐⭐ *"I didn't know I needed this."*
-> — **Me**, after building it
+> ⭐⭐⭐⭐⭐ *"Version 1 was a masterpiece. Version 2 made version 1 look like a rough draft."*
+> — **Me**
 
-> ⭐⭐⭐⭐⭐ *"A masterpiece."*
-> — **Also me**
+> ⭐⭐⭐⭐⭐ *"I got nudged at 7 AM. I have never felt so seen."*
+> — **My best friend, #2 on the leaderboard**
 
-> ⭐⭐⭐⭐⭐ *"My streak is 30 days and my life has meaning."*
+> ⭐⭐⭐⭐⭐ *"Level 25. Porcelain God. My family has stopped speaking to me."*
+> — **A dedicated user**
+
+> ⭐⭐⭐⭐⭐ *"The confetti is excessive. I love it."*
 > — **A satisfied toilet**
 
 ---
@@ -106,6 +170,8 @@ git clone https://github.com/<your-username>/kakascalendar.git
 **Star ⭐ this repo if you appreciate greatness.**
 *(You do. You're here. Smart choice.)*
 
-Made with 💛, 🧠 and an unreasonable amount of confidence.
+Made with 💛, 🧠, 🐍, and an unreasonable, frankly alarming amount of confidence.
+
+<sub>Insights are friendly patterns, not medical advice. If something feels off, talk to a doctor. Even legends get checkups.</sub>
 
 </div>
